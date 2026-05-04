@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase, type Property, type Contact } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
 import { Building2, Users, FileText, TrendingUp } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 
