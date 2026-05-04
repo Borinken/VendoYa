@@ -1,36 +1,108 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🏠 Vendoya CRM - CRM Inmobiliario
 
-## Getting Started
+Sistema CRM completo para agencias inmobiliarias desarrollado con Next.js 14, TypeScript, Tailwind CSS y Supabase.
 
-First, run the development server:
+## 🚀 Características
+
+- ✅ **Gestión de Propiedades** - CRUD completo de inmuebles
+- ✅ **Gestión de Contactos** - Leads, propietarios, compradores, inquilinos
+- ✅ **Contratos** - Generación y gestión de contratos
+- ✅ **Alquileres** - Gestión integral de alquileres activos
+- ✅ **Dashboard** - Estadísticas y métricas en tiempo real
+- ✅ **Responsive** - Diseño adaptado a móvil, tablet y desktop
+
+## 📋 Requisitos Previos
+
+- Node.js 18+ instalado
+- Cuenta de Supabase (gratis en https://supabase.com)
+- Cuenta de Vercel (gratis en https://vercel.com)
+
+## 🛠️ Instalación y Configuración
+
+### 1. Clonar e instalar dependencias
+
+```bash
+cd vendoya-crm
+npm install
+```
+
+### 2. Configurar Supabase
+
+1. Ve a https://supabase.com y crea un nuevo proyecto
+2. En el panel de Supabase, ve a **SQL Editor**
+3. Copia y pega el contenido de `supabase-schema.sql`
+4. Ejecuta el script para crear todas las tablas
+
+5. Obtén tus credenciales:
+   - Ve a **Settings** > **API**
+   - Copia `URL` y `anon public` key
+
+### 3. Configurar variables de entorno
+
+Edita el archivo `.env.local` con tus credenciales:
+
+```bash
+# Reemplaza con tus credenciales reales de Supabase
+NEXT_PUBLIC_SUPABASE_URL=https://tu-proyecto.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=tu-anon-key
+
+# URL de la aplicación
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+### 4. Ejecutar en desarrollo
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abre http://localhost:3000 en tu navegador.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🌐 Desplegar en Vercel con dominio vendoya.es
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Desde la terminal:
 
-## Learn More
+```bash
+# 1. Login en Vercel
+vercel login
 
-To learn more about Next.js, take a look at the following resources:
+# 2. Desplegar
+vercel --prod
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# 3. Configurar dominio
+vercel alias set <url-deployment> vendoya.es
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 📁 Estructura del Proyecto
 
-## Deploy on Vercel
+```
+vendoya-crm/
+├── app/
+│   ├── dashboard/              # Dashboard principal
+│   │   ├── page.tsx           # Página principal con stats
+│   │   └── layout.tsx         # Layout con sidebar
+│   ├── api/                   # API routes
+│   └── page.tsx               # Redirect a dashboard
+├── components/
+│   ├── Sidebar.tsx            # Sidebar de navegación
+│   └── ui/                    # Componentes UI reutilizables
+├── lib/
+│   ├── supabase.ts            # Cliente de Supabase + tipos
+│   └── utils.ts               # Utilidades
+└── supabase-schema.sql        # Schema de base de datos
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🗄️ Base de Datos (Supabase)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+El schema incluye: agencies, users, contacts, properties, contracts, rentals, incidents, activities, capture_filters, captured_properties
+
+## 🎨 Tecnologías
+
+- Next.js 14 + TypeScript
+- Tailwind CSS
+- Supabase (PostgreSQL)
+- Vercel
+
+---
+
+Desarrollado con ❤️ para revolucionar el mercado inmobiliario español
