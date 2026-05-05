@@ -1,7 +1,13 @@
 import OpenAI from 'openai'
 
+// Configuración flexible: Groq (GRATIS) u OpenAI
+const useGroq = true // Cambiar a false para usar OpenAI
+const apiKey = useGroq ? process.env.GROQ_API_KEY : process.env.OPENAI_API_KEY
+const baseURL = useGroq ? 'https://api.groq.com/openai/v1' : undefined
+
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
+  apiKey: apiKey || 'demo-key',
+  baseURL
 })
 
 interface PropertyData {
@@ -87,7 +93,7 @@ Proporciona análisis en formato JSON:
 
   try {
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4',
+      model: useGroq ? 'llama-3.3-70b-versatile' : 'gpt-4',
       messages: [{ role: 'user', content: aiPrompt }],
       temperature: 0.3,
       response_format: { type: 'json_object' }
