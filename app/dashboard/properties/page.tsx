@@ -3,12 +3,40 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { 
-  Building2, BellRing, MessageCircle, Trash2, 
-  Search, MapPin, Euro, Layers, Calendar, ExternalLink, 
-  CheckCircle2, Clock, Key, Lock, RefreshCw, Shield 
+  Building2, Trash2, MapPin, Euro, Layers, 
+  ExternalLink, CheckCircle2, Clock, Plus, Eye, Power,
+  Shield, Filter, Home, TrendingUp, X, Save, RefreshCw
 } from 'lucide-react'
 
-interface CapturedProperty {
+// ============================================
+// INTERFACES
+// ============================================
+
+interface PlatformCredentials {
+  platform: 'idealista' | 'fotocasa' | 'realadvisor'
+  username: string
+  password: string
+  connected: boolean
+  lastCheck?: string
+}
+
+interface SearchFilter {
+  id?: string
+  name: string
+  platform: 'idealista' | 'fotocasa' | 'realadvisor'
+  city: string
+  operation: 'sale' | 'rent'
+  propertyType: string
+  minPrice?: number
+  maxPrice?: number
+  minRooms?: number
+  minSurface?: number
+  isActive: boolean
+  propertiesFound?: number
+  lastRun?: string
+}
+
+interface Property {
   id: string
   source: string
   source_id: string
@@ -26,96 +54,103 @@ interface CapturedProperty {
     propertyType?: string
   }
   status: 'new' | 'viewed' | 'interested' | 'contacted' | 'imported' | 'discarded'
-  match_score: number
-  first_seen_at: string
-  notified_at?: string
   created_at: string
 }
 
-interface PropertyAlarm {
-  id?: string
-  property_id: string
-  name: string
-  conditions: {
-    maxPrice?: number
-    minRooms?: number
-    minSurface?: number
-    cities?: string[]
-    propertyTypes?: string[]
-  }
-  notify_whatsapp: boolean
-  whatsapp_number?: string
-  is_active: boolean
-}
+// ============================================
+// PLATFORM CONFIGURATION
+// ============================================
 
-interface PlatformCredentials {
-  idealista_username?: string
-  idealista_password?: string
-  fotocasa_username?: string
-  fotocasa_password?: string
-  realadvisor_username?: string
-  realadvisor_password?: string
-}
+const PLATFORMS = [
+  {
+    id: 'idealista' as const,
+    name: 'Idealista',
+    logo: '/idealista-logo.png', // Añadir logos después
+    color: 'bg-yellow-500',
+    placeholder: {
+      username: 'tu-email@ejemplo.com',
+      password: '••••••••'
+    }
+  },
+  {
+    id: 'fotocasa' as const,
+    name: 'Fotocasa',
+    logo: '/fotocasa-logo.png',
+    color: 'bg-blue-500',
+    placeholder: {
+      username: 'tu-email@ejemplo.com',
+      password: '••••••••'
+    }
+  },
+  {
+    id: 'realadvisor' as const,
+    name: 'RealAdvisor',
+    logo: '/realadvisor-logo.png',
+    color: 'bg-emerald-500',
+    placeholder: {
+      username: 'tu-email@ejemplo.com',
+      password: '••••••••'
+    }
+  }
+]
+
+const PROPERTY_TYPES = ['Piso', 'Casa', 'Chalet', 'Ático', 'Dúplex', 'Estudio']
+const OPERATION_TYPES = [
+  { id: 'sale', name: 'Venta' },
+  { id: 'rent', name: 'Alquiler' }
+]
+
+// ============================================
+// MAIN COMPONENT
+// ============================================
 
 export default function PropertiesPage() {
-  const [properties, setProperties] = useState<CapturedProperty[]>([])
-  const [loading, setLoading] = useState(true)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState<string>('all')
-  const [sourceFilter, setSourceFilter] = useState<string>('all')
+  // Estados
+  const [currentStep, setCurrentStep] = useState<'credentials' | 'filters' | 'properties'>('credentials')
+  const [credentials, setCredentials] = useState<PlatformCredentials[]>([])
+  const [filters, setFilters] = useState<SearchFilter[]>([])
+  const [properties, setProperties] = useState<Property[]>([])
+  const [loading, setLoading] = useState(false)
+  const [showFilterForm, setShowFilterForm] = useState(false)
+  const [editingFilter, setEditingFilter] = useState<SearchFilter | null>(null)
   
-  // Credenciales de plataformas
-  const [showCredentials, setShowCredentials] = useState(false)
-  const [credentials, setCredentials] = useState<PlatformCredentials>({})
-  const [savingCredentials, setSavingCredentials] = useState(false)
-  
-  // Alarmas
-  const [showAlarmForm, setShowAlarmForm] = useState(false)
-  const [alarmData, setAlarmData] = useState<PropertyAlarm>({
-    property_id: '',
+  // Form states
+  const [filterForm, setFilterForm] = useState<SearchFilter>({
     name: '',
-    conditions: {},
-    notify_whatsapp: true,
-    is_active: true,
+    platform: 'idealista',
+    city: '',
+    operation: 'sale',
+    propertyType: 'Piso',
+    isActive: true
   })
-  
-  // Auto-sync
-  const [autoSync, setAutoSync] = useState(false)
-  const [syncInterval, setSyncInterval] = useState(30) // minutos
 
   useEffect(() => {
-    loadProperties()
-    loadCredentials()
-    checkAutoSync()
+    loadData()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Auto-select first connected platform when showing filter form
   useEffect(() => {
-    if (autoSync) {
-      const interval = setInterval(() => {
-        syncNewProperties()
-      }, syncInterval * 60 * 1000)
-      
-      return () => clearInterval(interval)
+    if (showFilterForm) {
+      const connectedPlatformsList = credentials.filter(c => c.connected).map(c => c.platform)
+      // If current platform is not connected, select the first connected one
+      if (connectedPlatformsList.length > 0 && !connectedPlatformsList.includes(filterForm.platform)) {
+        setFilterForm(prev => ({ ...prev, platform: connectedPlatformsList[0] }))
+      }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoSync, syncInterval])
+  }, [showFilterForm, credentials, filterForm.platform])
 
-  const loadProperties = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('captured_properties')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(100)
-
-      if (error) throw error
-      setProperties(data || [])
-    } catch (error) {
-      console.error('Error loading properties:', error)
-    } finally {
-      setLoading(false)
-    }
+  const loadData = async () => {
+    await Promise.all([
+      loadCredentials(),
+      loadFilters(),
+      loadProperties()
+    ])
   }
+
+  // ============================================
+  // CREDENTIALS FUNCTIONS
+  // ============================================
 
   const loadCredentials = async () => {
     try {
@@ -123,185 +158,227 @@ export default function PropertiesPage() {
         .from('system_config')
         .select('config_key, config_value')
         .in('config_key', [
-          'idealista_username',
-          'idealista_password',
-          'fotocasa_username',
-          'fotocasa_password',
-          'realadvisor_username',
-          'realadvisor_password'
+          'idealista_username', 'idealista_password',
+          'fotocasa_username', 'fotocasa_password',
+          'realadvisor_username', 'realadvisor_password'
         ])
 
       if (error) throw error
-      
-      const creds: PlatformCredentials = {}
-      data?.forEach(item => {
-        creds[item.config_key as keyof PlatformCredentials] = item.config_value
+
+      const creds: PlatformCredentials[] = PLATFORMS.map(platform => {
+        const username = data?.find(d => d.config_key === `${platform.id}_username`)?.config_value
+        const password = data?.find(d => d.config_key === `${platform.id}_password`)?.config_value
+        
+        return {
+          platform: platform.id,
+          username: username || '',
+          password: password || '',
+          connected: !!(username && password)
+        }
       })
+
       setCredentials(creds)
     } catch (error) {
       console.error('Error loading credentials:', error)
     }
   }
 
-  const saveCredentials = async () => {
-    setSavingCredentials(true)
+  const saveCredential = async (platform: string, username: string, password: string) => {
+    setLoading(true)
     try {
-      // Usar API de encriptación para guardar credenciales de forma segura
+      const credentialsToSave = {
+        [`${platform}_username`]: username,
+        [`${platform}_password`]: password
+      }
+
       const response = await fetch('/api/credentials', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(credentials)
+        body: JSON.stringify(credentialsToSave)
       })
 
-      const result = await response.json()
-
       if (!response.ok) {
-        throw new Error(result.error || 'Error al guardar')
+        throw new Error('Error al guardar credenciales')
       }
 
-      alert('✅ Credenciales guardadas y encriptadas exitosamente con AES-256')
-      
-      // Recargar credenciales (mostrará placeholders)
-      await loadCredentials()
+      // Actualizar estado local
+      setCredentials(prev => prev.map(cred => 
+        cred.platform === platform 
+          ? { ...cred, username, password, connected: true, lastCheck: new Date().toISOString() }
+          : cred
+      ))
+
+      alert(`✅ ${PLATFORMS.find(p => p.id === platform)?.name} conectado correctamente`)
     } catch (error) {
-      console.error('Error saving credentials:', error)
-      alert('❌ Error al guardar credenciales')
+      console.error('Error saving credential:', error)
+      alert('❌ Error al conectar. Verifica tus credenciales.')
     } finally {
-      setSavingCredentials(false)
+      setLoading(false)
     }
   }
 
-  const syncNewProperties = async () => {
-    try {
-      const response = await fetch('/api/scraping/sync-all', {
-        method: 'POST',
-      })
-      
-      const result = await response.json()
-      
-      if (result.newProperties > 0) {
-        await loadProperties()
-        
-        // Enviar notificación WhatsApp si hay nuevas propiedades
-        await checkAndNotifyNewProperties(result.properties)
-      }
-    } catch (error) {
-      console.error('Error syncing properties:', error)
-    }
-  }
+  // ============================================
+  // FILTERS FUNCTIONS
+  // ============================================
 
-  const checkAndNotifyNewProperties = async (newProps: CapturedProperty[]) => {
+  const loadFilters = async () => {
     try {
-      // Obtener alarmas activas
-      const { data: alarms } = await supabase
-        .from('property_alarms')
+      const { data, error } = await supabase
+        .from('capture_filters')
         .select('*')
-        .eq('is_active', true)
-
-      if (!alarms || alarms.length === 0) return
-
-      for (const prop of newProps) {
-        for (const alarm of alarms) {
-          if (meetsAlarmConditions(prop, alarm)) {
-            await sendWhatsAppNotification(prop, alarm)
-            
-            // Marcar como notificada
-            await supabase
-              .from('captured_properties')
-              .update({ notified_at: new Date().toISOString() })
-              .eq('id', prop.id)
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error checking alarms:', error)
-    }
-  }
-
-  const meetsAlarmConditions = (property: CapturedProperty, alarm: PropertyAlarm): boolean => {
-    const { data } = property
-    const { conditions } = alarm
-
-    if (conditions.maxPrice && data.price && data.price > conditions.maxPrice) return false
-    if (conditions.minRooms && data.rooms && data.rooms < conditions.minRooms) return false
-    if (conditions.minSurface && data.surface && data.surface < conditions.minSurface) return false
-    if (conditions.cities && data.city && !conditions.cities.includes(data.city)) return false
-    if (conditions.propertyTypes && data.propertyType && !conditions.propertyTypes.includes(data.propertyType)) return false
-
-    return true
-  }
-
-  const sendWhatsAppNotification = async (property: CapturedProperty, alarm: PropertyAlarm) => {
-    try {
-      const message = `🏠 *Nueva Propiedad Encontrada!*\n\n` +
-        `📍 ${property.data.city || 'N/A'}\n` +
-        `💰 ${formatPrice(property.data.price)}\n` +
-        `📐 ${property.data.surface || 'N/A'} m²\n` +
-        `🛏️ ${property.data.rooms || 'N/A'} habitaciones\n` +
-        `🏢 ${property.source.toUpperCase()}\n\n` +
-        `🔗 ${property.source_url}`
-
-      const response = await fetch('/api/whatsapp/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          phone: alarm.whatsapp_number,
-          message
-        })
-      })
-
-      if (!response.ok) {
-        console.error('Error sending WhatsApp:', await response.text())
-      }
-    } catch (error) {
-      console.error('Error sending WhatsApp:', error)
-    }
-  }
-
-  const createAlarm = async () => {
-    try {
-      const { error } = await supabase
-        .from('property_alarms')
-        .insert([alarmData])
+        .order('created_at', { ascending: false })
 
       if (error) throw error
-
-      alert('✅ Alarma creada exitosamente')
-      setShowAlarmForm(false)
-      resetAlarmForm()
+      
+      setFilters((data || []).map(f => ({
+        id: f.id,
+        name: f.name,
+        platform: f.source,
+        city: f.city,
+        operation: f.operation_type,
+        propertyType: f.property_type,
+        minPrice: f.min_price,
+        maxPrice: f.max_price,
+        minRooms: f.min_rooms,
+        minSurface: f.min_surface,
+        isActive: f.is_active,
+        propertiesFound: f.properties_found,
+        lastRun: f.last_run
+      })))
     } catch (error) {
-      console.error('Error creating alarm:', error)
-      alert('❌ Error al crear alarma')
+      console.error('Error loading filters:', error)
     }
   }
 
-  const resetAlarmForm = () => {
-    setAlarmData({
-      property_id: '',
-      name: '',
-      conditions: {},
-      notify_whatsapp: true,
-      is_active: true,
-    })
+  const saveFilter = async () => {
+    setLoading(true)
+    try {
+      const filterData = {
+        name: filterForm.name,
+        source: filterForm.platform,
+        operation_type: filterForm.operation,
+        property_type: filterForm.propertyType,
+        city: filterForm.city,
+        min_price: filterForm.minPrice,
+        max_price: filterForm.maxPrice,
+        min_rooms: filterForm.minRooms,
+        min_surface: filterForm.minSurface,
+        is_active: filterForm.isActive,
+        notify_whatsapp: false,
+        filters: {
+          city: filterForm.city,
+          operation: filterForm.operation,
+          propertyType: filterForm.propertyType,
+          minPrice: filterForm.minPrice,
+          maxPrice: filterForm.maxPrice,
+          minRooms: filterForm.minRooms,
+          minSurface: filterForm.minSurface
+        }
+      }
+
+      if (editingFilter?.id) {
+        const { error } = await supabase
+          .from('capture_filters')
+          .update(filterData)
+          .eq('id', editingFilter.id)
+        if (error) throw error
+      } else {
+        const { error } = await supabase
+          .from('capture_filters')
+          .insert([filterData])
+        if (error) throw error
+      }
+
+      alert('✅ Filtro guardado correctamente')
+      await loadFilters()
+      resetFilterForm()
+    } catch (error) {
+      console.error('Error saving filter:', error)
+      alert('❌ Error al guardar filtro')
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const updatePropertyStatus = async (propertyId: string, newStatus: CapturedProperty['status']) => {
+  const toggleFilterActive = async (filterId: string, isActive: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('capture_filters')
+        .update({ is_active: !isActive })
+        .eq('id', filterId)
+
+      if (error) throw error
+      await loadFilters()
+    } catch (error) {
+      console.error('Error toggling filter:', error)
+    }
+  }
+
+  const deleteFilter = async (filterId: string) => {
+    if (!confirm('¿Eliminar este filtro?')) return
+    
+    try {
+      const { error } = await supabase
+        .from('capture_filters')
+        .delete()
+        .eq('id', filterId)
+
+      if (error) throw error
+      await loadFilters()
+    } catch (error) {
+      console.error('Error deleting filter:', error)
+    }
+  }
+
+  const resetFilterForm = () => {
+    setFilterForm({
+      name: '',
+      platform: 'idealista',
+      city: '',
+      operation: 'sale',
+      propertyType: 'Piso',
+      isActive: true
+    })
+    setEditingFilter(null)
+    setShowFilterForm(false)
+  }
+
+  // ============================================
+  // PROPERTIES FUNCTIONS
+  // ============================================
+
+  const loadProperties = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('captured_properties')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(50)
+
+      if (error) throw error
+      setProperties(data || [])
+    } catch (error) {
+      console.error('Error loading properties:', error)
+    }
+  }
+
+  const updatePropertyStatus = async (propertyId: string, status: Property['status']) => {
     try {
       const { error } = await supabase
         .from('captured_properties')
-        .update({ status: newStatus })
+        .update({ status })
         .eq('id', propertyId)
 
       if (error) throw error
       await loadProperties()
     } catch (error) {
-      console.error('Error updating status:', error)
+      console.error('Error updating property:', error)
     }
   }
 
   const deleteProperty = async (propertyId: string) => {
-    if (!confirm('¿Estás seguro de eliminar esta propiedad?')) return
-
+    if (!confirm('¿Eliminar esta propiedad?')) return
+    
     try {
       const { error } = await supabase
         .from('captured_properties')
@@ -315,642 +392,813 @@ export default function PropertiesPage() {
     }
   }
 
-  const checkAutoSync = async () => {
-    try {
-      const { data } = await supabase
-        .from('system_config')
-        .select('config_value')
-        .eq('config_key', 'auto_sync_properties')
-        .single()
-
-      if (data) {
-        setAutoSync(data.config_value === 'true')
-      }
-    } catch (error) {
-      console.error('Error checking auto sync:', error)
-    }
-  }
-
-  const toggleAutoSync = async () => {
-    try {
-      const newValue = !autoSync
-      
-      const { error } = await supabase
-        .from('system_config')
-        .upsert({
-          config_key: 'auto_sync_properties',
-          config_value: newValue.toString(),
-          description: 'Sincronización automática de propiedades',
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'config_key' })
-
-      if (error) throw error
-      setAutoSync(newValue)
-    } catch (error) {
-      console.error('Error toggling auto sync:', error)
-    }
-  }
+  // ============================================
+  // HELPER FUNCTIONS
+  // ============================================
 
   const formatPrice = (price?: number) => {
     if (!price) return 'N/A'
-    return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(price)
+    return new Intl.NumberFormat('es-ES', {
+      style: 'currency',
+      currency: 'EUR',
+      maximumFractionDigits: 0
+    }).format(price)
   }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-ES', {
-      year: 'numeric',
+  const getPlatformInfo = (platform: string) => {
+    return PLATFORMS.find(p => p.id === platform) || PLATFORMS[0]
+  }
+
+  const formatDate = (date: string) => {
+    return new Date(date).toLocaleDateString('es-ES', {
+      day: '2-digit',
       month: 'short',
-      day: 'numeric'
+      hour: '2-digit',
+      minute: '2-digit'
     })
   }
 
-  const getSourceColor = (source: string) => {
-    const colors: Record<string, string> = {
-      idealista: 'bg-yellow-100 text-yellow-800',
-      fotocasa: 'bg-blue-100 text-blue-800',
-      realadvisor: 'bg-emerald-100 text-emerald-800'
-    }
-    return colors[source] || 'bg-gray-100 text-gray-800'
-  }
+  const connectedPlatforms = credentials.filter(c => c.connected).length
+  const activeFilters = filters.filter(f => f.isActive).length
+  const totalProperties = properties.length
 
-  const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      new: 'bg-green-100 text-green-800',
-      viewed: 'bg-blue-100 text-blue-800',
-      interested: 'bg-purple-100 text-purple-800',
-      contacted: 'bg-orange-100 text-orange-800',
-      imported: 'bg-gray-100 text-gray-800',
-      discarded: 'bg-red-100 text-red-800'
-    }
-    return colors[status] || 'bg-gray-100 text-gray-800'
-  }
-
-  const filteredProperties = properties.filter(prop => {
-    if (statusFilter !== 'all' && prop.status !== statusFilter) return false
-    if (sourceFilter !== 'all' && prop.source !== sourceFilter) return false
-    if (searchTerm) {
-      const search = searchTerm.toLowerCase()
-      return (
-        prop.data.title?.toLowerCase().includes(search) ||
-        prop.data.city?.toLowerCase().includes(search) ||
-        prop.data.address?.toLowerCase().includes(search)
-      )
-    }
-    return true
-  })
+  // ============================================
+  // RENDER
+  // ============================================
 
   return (
-    <div className="p-8 max-w-[1600px] mx-auto">
-      {/* Header */}
-      <div className="flex justify-between items-start mb-8">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">Propiedades Capturadas</h1>
-          <p className="text-gray-600">Gestiona las propiedades encontradas automáticamente</p>
-        </div>
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-7xl mx-auto">
         
-        <div className="flex gap-3">
-          <button
-            onClick={syncNewProperties}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-          >
-            <RefreshCw className="w-4 h-4" />
-            Sincronizar Ahora
-          </button>
-          
-          <button
-            onClick={() => setShowAlarmForm(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
-          >
-            <BellRing className="w-4 h-4" />
-            Nueva Alarma
-          </button>
-          
-          <button
-            onClick={() => setShowCredentials(!showCredentials)}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition"
-          >
-            <Key className="w-4 h-4" />
-            Credenciales
-          </button>
-        </div>
-      </div>
-
-      {/* Credenciales Panel */}
-      {showCredentials && (
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-8 border-l-4 border-blue-500">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold flex items-center gap-2">
-              <Lock className="w-5 h-5" />
-              Credenciales de Plataformas
-            </h2>
-            <button
-              onClick={() => setShowCredentials(false)}
-              className="text-gray-500 hover:text-gray-700"
-            >
-              ✕
-            </button>
-          </div>
-
-          {/* Aviso de Seguridad */}
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-            <div className="flex items-start gap-3">
-              <Shield className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-              <div>
-                <h3 className="font-semibold text-green-900 mb-2">🔐 Máxima Seguridad Implementada</h3>
-                <ul className="text-sm text-green-800 space-y-1">
-                  <li>• <strong>Encriptación AES-256-GCM:</strong> Tus credenciales se encriptan antes de guardar</li>
-                  <li>• <strong>Anti-detección avanzado:</strong> User-agents rotativos y delays humanizados</li>
-                  <li>• <strong>Rate limiting inteligente:</strong> Límites automáticos para evitar bloqueos</li>
-                  <li>• <strong>Gestión de sesiones:</strong> Cookies y sesiones persistentes como un navegador real</li>
-                  <li>• <strong>Protección de cuentas:</strong> Sistema diseñado para NO afectar tus cuentas</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Idealista */}
-            <div className="border border-gray-200 rounded-lg p-4">
-              <h3 className="font-semibold mb-3 flex items-center gap-2">
-                <div className="w-8 h-8 rounded bg-yellow-100 flex items-center justify-center">
-                  <Building2 className="w-4 h-4 text-yellow-600" />
-                </div>
-                Idealista
-              </h3>
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Usuario / Email
-                  </label>
-                  <input
-                    type="text"
-                    value={credentials.idealista_username || ''}
-                    onChange={(e) => setCredentials({ ...credentials, idealista_username: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="tu-email@ejemplo.com"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Contraseña
-                  </label>
-                  <input
-                    type="password"
-                    value={credentials.idealista_password || ''}
-                    onChange={(e) => setCredentials({ ...credentials, idealista_password: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="••••••••"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Fotocasa */}
-            <div className="border border-gray-200 rounded-lg p-4">
-              <h3 className="font-semibold mb-3 flex items-center gap-2">
-                <div className="w-8 h-8 rounded bg-blue-100 flex items-center justify-center">
-                  <Building2 className="w-4 h-4 text-blue-600" />
-                </div>
-                Fotocasa
-              </h3>
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Usuario / Email
-                  </label>
-                  <input
-                    type="text"
-                    value={credentials.fotocasa_username || ''}
-                    onChange={(e) => setCredentials({ ...credentials, fotocasa_username: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="tu-email@ejemplo.com"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Contraseña
-                  </label>
-                  <input
-                    type="password"
-                    value={credentials.fotocasa_password || ''}
-                    onChange={(e) => setCredentials({ ...credentials, fotocasa_password: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="••••••••"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* RealAdvisor */}
-            <div className="border border-gray-200 rounded-lg p-4">
-              <h3 className="font-semibold mb-3 flex items-center gap-2">
-                <div className="w-8 h-8 rounded bg-emerald-100 flex items-center justify-center">
-                  <Building2 className="w-4 h-4 text-emerald-600" />
-                </div>
-                RealAdvisor
-              </h3>
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Usuario / Email
-                  </label>
-                  <input
-                    type="text"
-                    value={credentials.realadvisor_username || ''}
-                    onChange={(e) => setCredentials({ ...credentials, realadvisor_username: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="tu-email@ejemplo.com"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Contraseña
-                  </label>
-                  <input
-                    type="password"
-                    value={credentials.realadvisor_password || ''}
-                    onChange={(e) => setCredentials({ ...credentials, realadvisor_password: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="••••••••"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-6 flex justify-end gap-3">
-            <button
-              onClick={() => setShowCredentials(false)}
-              className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={saveCredentials}
-              disabled={savingCredentials}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
-            >
-              {savingCredentials ? 'Guardando...' : 'Guardar Credenciales'}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Auto-Sync Toggle */}
-      <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-4 mb-6 border border-purple-200">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className={`p-2 rounded-lg ${autoSync ? 'bg-green-100' : 'bg-gray-100'}`}>
-              {autoSync ? (
-                <CheckCircle2 className="w-5 h-5 text-green-600" />
-              ) : (
-                <Clock className="w-5 h-5 text-gray-600" />
-              )}
-            </div>
-            <div>
-              <h3 className="font-semibold">Sincronización Automática</h3>
-              <p className="text-sm text-gray-600">
-                {autoSync 
-                  ? `Activa - Cada ${syncInterval} minutos` 
-                  : 'Desactivada - Sincroniza manualmente'}
-              </p>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            {autoSync && (
-              <select
-                value={syncInterval}
-                onChange={(e) => setSyncInterval(Number(e.target.value))}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              >
-                <option value={15}>Cada 15 min</option>
-                <option value={30}>Cada 30 min</option>
-                <option value={60}>Cada hora</option>
-                <option value={180}>Cada 3 horas</option>
-              </select>
-            )}
-            
-            <button
-              onClick={toggleAutoSync}
-              className={`px-6 py-2 rounded-lg font-medium transition ${
-                autoSync
-                  ? 'bg-red-600 hover:bg-red-700 text-white'
-                  : 'bg-green-600 hover:bg-green-700 text-white'
-              }`}
-            >
-              {autoSync ? 'Desactivar' : 'Activar'}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Filtros */}
-      <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Buscar por título, ciudad..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="all">Todos los estados</option>
-            <option value="new">Nuevas</option>
-            <option value="viewed">Vistas</option>
-            <option value="interested">Interesadas</option>
-            <option value="contacted">Contactadas</option>
-            <option value="imported">Importadas</option>
-            <option value="discarded">Descartadas</option>
-          </select>
-
-          <select
-            value={sourceFilter}
-            onChange={(e) => setSourceFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="all">Todas las fuentes</option>
-            <option value="idealista">Idealista</option>
-            <option value="fotocasa">Fotocasa</option>
-            <option value="realadvisor">RealAdvisor</option>
-          </select>
-
-          <div className="flex items-center justify-between px-4 py-2 bg-gray-50 rounded-lg">
-            <span className="text-sm font-medium text-gray-600">Total:</span>
-            <span className="text-lg font-bold text-gray-900">{filteredProperties.length}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Properties List */}
-      {loading ? (
-        <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        </div>
-      ) : filteredProperties.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-          <Building2 className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-          <h3 className="text-xl font-semibold text-gray-700 mb-2">No hay propiedades</h3>
-          <p className="text-gray-500">
-            {searchTerm || statusFilter !== 'all' || sourceFilter !== 'all'
-              ? 'No se encontraron propiedades con los filtros aplicados'
-              : 'Activa la sincronización automática o ejecuta una captura manual'}
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            🏠 Gestor de Propiedades
+          </h1>
+          <p className="text-gray-600">
+            Conecta tus cuentas, configura filtros y encuentra propiedades automáticamente
           </p>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {filteredProperties.map((property) => (
-            <div key={property.id} className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow border border-gray-200">
-              {/* Image */}
-              {property.data.images && property.data.images.length > 0 ? (
-                <div className="relative h-48 bg-gray-200 rounded-t-lg overflow-hidden">
-                  <div 
-                    className="w-full h-full bg-cover bg-center"
-                    style={{ backgroundImage: `url(${property.data.images[0]})` }}
-                  />
-                  <div className="absolute top-2 left-2 flex gap-2">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getSourceColor(property.source)}`}>
-                      {property.source}
-                    </span>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(property.status)}`}>
-                      {property.status}
-                    </span>
-                  </div>
-                  {property.notified_at && (
-                    <div className="absolute top-2 right-2">
-                      <div className="bg-green-500 text-white p-1 rounded-full">
-                        <MessageCircle className="w-4 h-4" />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="h-48 bg-gray-100 rounded-t-lg flex items-center justify-center">
-                  <Building2 className="w-16 h-16 text-gray-300" />
-                </div>
-              )}
 
-              {/* Content */}
-              <div className="p-4">
-                <h3 className="font-semibold text-lg mb-2 line-clamp-2">
-                  {property.data.title || 'Sin título'}
-                </h3>
-
-                <div className="space-y-2 mb-4">
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <MapPin className="w-4 h-4" />
-                    <span>{property.data.city || 'N/A'}</span>
-                  </div>
-                  
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Euro className="w-4 h-4" />
-                    <span className="font-semibold text-lg text-blue-600">
-                      {formatPrice(property.data.price)}
-                    </span>
-                  </div>
-
-                  <div className="flex gap-4 text-sm text-gray-600">
-                    {property.data.surface && (
-                      <span className="flex items-center gap-1">
-                        <Layers className="w-4 h-4" />
-                        {property.data.surface} m²
-                      </span>
-                    )}
-                    {property.data.rooms && (
-                      <span>🛏️ {property.data.rooms}</span>
-                    )}
-                    {property.data.bathrooms && (
-                      <span>🚿 {property.data.bathrooms}</span>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-2 text-xs text-gray-500">
-                    <Calendar className="w-3 h-3" />
-                    {formatDate(property.first_seen_at)}
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="flex gap-2 pt-3 border-t border-gray-200">
-                  <a
-                    href={property.source_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 flex items-center justify-center gap-1 px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                    Ver
-                  </a>
-                  
-                  <select
-                    value={property.status}
-                    onChange={(e) => updatePropertyStatus(property.id, e.target.value as CapturedProperty['status'])}
-                    className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="new">Nueva</option>
-                    <option value="viewed">Vista</option>
-                    <option value="interested">Interesada</option>
-                    <option value="contacted">Contactada</option>
-                    <option value="imported">Importada</option>
-                    <option value="discarded">Descartada</option>
-                  </select>
-
-                  <button
-                    onClick={() => deleteProperty(property.id)}
-                    className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition"
-                    title="Eliminar"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
+        {/* Progress Steps */}
+        <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+          <div className="flex items-center justify-between">
+            <StepIndicator 
+              number={1} 
+              title="Conectar Cuentas" 
+              active={currentStep === 'credentials'}
+              completed={connectedPlatforms > 0}
+              onClick={() => setCurrentStep('credentials')}
+            />
+            <div className="flex-1 h-1 bg-gray-200 mx-4">
+              <div className={`h-full transition-all ${connectedPlatforms > 0 ? 'bg-emerald-500 w-full' : 'w-0'}`} />
             </div>
-          ))}
-        </div>
-      )}
-
-      {/* Alarm Form Modal */}
-      {showAlarmForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold flex items-center gap-2">
-                  <BellRing className="w-6 h-6" />
-                  Crear Alarma Automática
-                </h2>
-                <button
-                  onClick={() => setShowAlarmForm(false)}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  ✕
-                </button>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Nombre de la Alarma
-                  </label>
-                  <input
-                    type="text"
-                    value={alarmData.name}
-                    onChange={(e) => setAlarmData({ ...alarmData, name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    placeholder="Ej: Pisos baratos en Madrid"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Precio Máximo (€)
-                    </label>
-                    <input
-                      type="number"
-                      value={alarmData.conditions.maxPrice || ''}
-                      onChange={(e) => setAlarmData({
-                        ...alarmData,
-                        conditions: { ...alarmData.conditions, maxPrice: Number(e.target.value) }
-                      })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                      placeholder="300000"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Habitaciones Mínimas
-                    </label>
-                    <input
-                      type="number"
-                      value={alarmData.conditions.minRooms || ''}
-                      onChange={(e) => setAlarmData({
-                        ...alarmData,
-                        conditions: { ...alarmData.conditions, minRooms: Number(e.target.value) }
-                      })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                      placeholder="2"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Superficie Mínima (m²)
-                    </label>
-                    <input
-                      type="number"
-                      value={alarmData.conditions.minSurface || ''}
-                      onChange={(e) => setAlarmData({
-                        ...alarmData,
-                        conditions: { ...alarmData.conditions, minSurface: Number(e.target.value) }
-                      })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                      placeholder="80"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 p-4 bg-green-50 rounded-lg border border-green-200">
-                  <input
-                    type="checkbox"
-                    id="notify_whatsapp"
-                    checked={alarmData.notify_whatsapp}
-                    onChange={(e) => setAlarmData({ ...alarmData, notify_whatsapp: e.target.checked })}
-                    className="w-5 h-5 text-green-600 focus:ring-green-500 rounded"
-                  />
-                  <label htmlFor="notify_whatsapp" className="flex-1">
-                    <div className="font-medium text-gray-900">Notificar por WhatsApp</div>
-                    <div className="text-sm text-gray-600">
-                      Recibe un mensaje cuando se encuentren propiedades que cumplan estas condiciones
-                    </div>
-                  </label>
-                  <MessageCircle className="w-5 h-5 text-green-600" />
-                </div>
-
-                {alarmData.notify_whatsapp && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Número de WhatsApp
-                    </label>
-                    <input
-                      type="tel"
-                      value={alarmData.whatsapp_number || ''}
-                      onChange={(e) => setAlarmData({ ...alarmData, whatsapp_number: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                      placeholder="+34604347363"
-                    />
-                  </div>
-                )}
-
-                <div className="flex gap-3 pt-4">
-                  <button
-                    onClick={() => setShowAlarmForm(false)}
-                    className="flex-1 px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    onClick={createAlarm}
-                    className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
-                  >
-                    Crear Alarma
-                  </button>
-                </div>
-              </div>
+            <StepIndicator 
+              number={2} 
+              title="Configurar Filtros" 
+              active={currentStep === 'filters'}
+              completed={activeFilters > 0}
+              onClick={() => setCurrentStep('filters')}
+            />
+            <div className="flex-1 h-1 bg-gray-200 mx-4">
+              <div className={`h-full transition-all ${activeFilters > 0 ? 'bg-emerald-500 w-full' : 'w-0'}`} />
             </div>
+            <StepIndicator 
+              number={3} 
+              title="Ver Propiedades" 
+              active={currentStep === 'properties'}
+              completed={totalProperties > 0}
+              onClick={() => setCurrentStep('properties')}
+            />
           </div>
         </div>
-      )}
+
+        {/* Step 1: Credentials */}
+        {currentStep === 'credentials' && (
+          <div className="space-y-4">
+            <div className="mb-4">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">1. Conecta tus Cuentas</h2>
+              <p className="text-gray-600 text-sm">
+                Conecta al menos 1 plataforma para continuar. No es necesario conectar todas.
+              </p>
+            </div>
+            <div className="flex items-center justify-between mb-4">
+              <div className="text-sm text-gray-600 font-medium">
+                {connectedPlatforms} de {PLATFORMS.length} plataformas conectadas
+              </div>
+            </div>
+            
+            {PLATFORMS.map(platform => {
+              const cred = credentials.find(c => c.platform === platform.id)
+              return (
+                <CredentialCard
+                  key={platform.id}
+                  platform={platform}
+                  credential={cred}
+                  onSave={saveCredential}
+                  loading={loading}
+                />
+              )
+            })}
+
+            <div className="flex justify-end mt-6">
+              <button
+                onClick={() => setCurrentStep('filters')}
+                disabled={connectedPlatforms === 0}
+                className="flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition"
+              >
+                Siguiente: Configurar Filtros →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 2: Filters */}
+        {currentStep === 'filters' && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-bold text-gray-900">2. Filtros de Búsqueda</h2>
+              <button
+                onClick={() => setShowFilterForm(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition"
+              >
+                <Plus className="w-5 h-5" />
+                Nuevo Filtro
+              </button>
+            </div>
+
+            {showFilterForm && (
+              <FilterForm
+                form={filterForm}
+                onChange={setFilterForm}
+                onSave={saveFilter}
+                onCancel={resetFilterForm}
+                loading={loading}
+                connectedPlatforms={credentials.filter(c => c.connected).map(c => c.platform)}
+              />
+            )}
+
+            {filters.length === 0 ? (
+              <div className="bg-white rounded-xl shadow-sm p-12 text-center">
+                <Filter className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  No hay filtros configurados
+                </h3>
+                <p className="text-gray-600 mb-6">
+                  Crea tu primer filtro para empezar a buscar propiedades automáticamente
+                </p>
+                <button
+                  onClick={() => setShowFilterForm(true)}
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition"
+                >
+                  <Plus className="w-5 h-5" />
+                  Crear Primer Filtro
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {filters.map(filter => (
+                  <FilterCard
+                    key={filter.id}
+                    filter={filter}
+                    onToggle={() => filter.id && toggleFilterActive(filter.id, filter.isActive)}
+                    onEdit={() => {
+                      setFilterForm(filter)
+                      setEditingFilter(filter)
+                      setShowFilterForm(true)
+                    }}
+                    onDelete={() => filter.id && deleteFilter(filter.id)}
+                  />
+                ))}
+              </div>
+            )}
+
+            <div className="flex justify-between mt-6">
+              <button
+                onClick={() => setCurrentStep('credentials')}
+                className="flex items-center gap-2 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+              >
+                ← Volver
+              </button>
+              <button
+                onClick={() => setCurrentStep('properties')}
+                disabled={activeFilters === 0}
+                className="flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition"
+              >
+                Ver Propiedades →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 3: Properties */}
+        {currentStep === 'properties' && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-bold text-gray-900">3. Propiedades Encontradas</h2>
+              <div className="flex items-center gap-4">
+                <div className="text-sm text-gray-600">
+                  {totalProperties} propiedades
+                </div>
+                <button
+                  onClick={loadProperties}
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  Actualizar
+                </button>
+              </div>
+            </div>
+
+            {properties.length === 0 ? (
+              <div className="bg-white rounded-xl shadow-sm p-12 text-center">
+                <Building2 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  No hay propiedades todavía
+                </h3>
+                <p className="text-gray-600 mb-6">
+                  Las propiedades aparecerán automáticamente según tus filtros activos.<br />
+                  El sistema busca nuevas propiedades cada 5 minutos.
+                </p>
+                <button
+                  onClick={() => setCurrentStep('filters')}
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition"
+                >
+                  Configurar Filtros
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {properties.map(property => (
+                  <PropertyCard
+                    key={property.id}
+                    property={property}
+                    onUpdateStatus={updatePropertyStatus}
+                    onDelete={deleteProperty}
+                    formatPrice={formatPrice}
+                    formatDate={formatDate}
+                    getPlatformInfo={getPlatformInfo}
+                  />
+                ))}
+              </div>
+            )}
+
+            <div className="flex justify-start mt-6">
+              <button
+                onClick={() => setCurrentStep('filters')}
+                className="flex items-center gap-2 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+              >
+                ← Volver a Filtros
+              </button>
+            </div>
+          </div>
+        )}
+
+      </div>
     </div>
   )
+}
+
+// ============================================
+// SUB-COMPONENTS
+// ============================================
+
+function StepIndicator({ 
+  number, 
+  title, 
+  active, 
+  completed, 
+  onClick 
+}: { 
+  number: number
+  title: string
+  active: boolean
+  completed: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`flex flex-col items-center gap-2 transition ${active ? 'scale-110' : 'scale-100'}`}
+    >
+      <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg transition ${
+        completed ? 'bg-emerald-500' : active ? 'bg-blue-500' : 'bg-gray-300'
+      }`}>
+        {completed ? <CheckCircle2 className="w-6 h-6" /> : number}
+      </div>
+      <span className={`text-sm font-medium ${active ? 'text-gray-900' : 'text-gray-500'}`}>
+        {title}
+      </span>
+    </button>
+  )
+}
+
+function CredentialCard({ 
+  platform, 
+  credential, 
+  onSave, 
+  loading 
+}: {
+  platform: typeof PLATFORMS[0]
+  credential?: PlatformCredentials
+  onSave: (platform: string, username: string, password: string) => void
+  loading: boolean
+}) {
+  const [username, setUsername] = useState(credential?.username || '')
+  const [password, setPassword] = useState(credential?.password || '')
+  const [showPassword, setShowPassword] = useState(false)
+
+  return (
+    <div className="bg-white rounded-xl shadow-sm p-6 border-2 border-gray-100">
+      <div className="flex items-start gap-4">
+        {/* Logo Placeholder */}
+        <div className={`w-16 h-16 rounded-lg ${platform.color} flex items-center justify-center text-white font-bold text-2xl flex-shrink-0`}>
+          {platform.name[0]}
+        </div>
+        
+        <div className="flex-1">
+          <div className="flex items-center gap-3 mb-4">
+            <h3 className="text-xl font-bold text-gray-900">{platform.name}</h3>
+            {credential?.connected && (
+              <span className="flex items-center gap-1 px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm font-medium">
+                <CheckCircle2 className="w-4 h-4" />
+                Conectado
+              </span>
+            )}
+          </div>
+
+          <div className="space-y-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Usuario / Email
+              </label>
+              <input
+                type="email"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder={platform.placeholder.username}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Contraseña
+              </label>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder={platform.placeholder.password}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                >
+                  {showPassword ? <Eye className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+            </div>
+
+            <button
+              onClick={() => onSave(platform.id, username, password)}
+              disabled={!username || !password || loading}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition"
+            >
+              <Shield className="w-4 h-4" />
+              {credential?.connected ? 'Actualizar Conexión' : 'Conectar Cuenta'}
+            </button>
+          </div>
+
+          {credential?.lastCheck && (
+            <div className="mt-3 text-xs text-gray-500">
+              Última verificación: {formatDate(credential.lastCheck)}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function FilterForm({
+  form,
+  onChange,
+  onSave,
+  onCancel,
+  loading,
+  connectedPlatforms
+}: {
+  form: SearchFilter
+  onChange: (form: SearchFilter) => void
+  onSave: () => void
+  onCancel: () => void
+  loading: boolean
+  connectedPlatforms: string[]
+}) {
+  return (
+    <div className="bg-white rounded-xl shadow-sm p-6 border-2 border-emerald-500">
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-xl font-bold text-gray-900">
+          {form.id ? 'Editar Filtro' : 'Nuevo Filtro de Búsqueda'}
+        </h3>
+        <button onClick={onCancel} className="text-gray-500 hover:text-gray-700">
+          <X className="w-6 h-6" />
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="md:col-span-2">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Nombre del Filtro
+          </label>
+          <input
+            type="text"
+            value={form.name}
+            onChange={(e) => onChange({ ...form, name: e.target.value })}
+            placeholder="Ej: Pisos Barcelona Centro"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Plataforma
+          </label>
+          <select
+            value={form.platform}
+            onChange={(e) => onChange({ ...form, platform: e.target.value as 'idealista' | 'fotocasa' | 'realadvisor' })}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+          >
+            {PLATFORMS.filter(p => connectedPlatforms.includes(p.id)).map(platform => (
+              <option key={platform.id} value={platform.id}>
+                {platform.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Ciudad
+          </label>
+          <input
+            type="text"
+            value={form.city}
+            onChange={(e) => onChange({ ...form, city: e.target.value })}
+            placeholder="Barcelona, Madrid, Valencia..."
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Operación
+          </label>
+          <select
+            value={form.operation}
+            onChange={(e) => onChange({ ...form, operation: e.target.value as 'sale' | 'rent' })}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+          >
+            {OPERATION_TYPES.map(op => (
+              <option key={op.id} value={op.id}>{op.name}</option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Tipo de Propiedad
+          </label>
+          <select
+            value={form.propertyType}
+            onChange={(e) => onChange({ ...form, propertyType: e.target.value })}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+          >
+            {PROPERTY_TYPES.map(type => (
+              <option key={type} value={type}>{type}</option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Precio Mínimo (€)
+          </label>
+          <input
+            type="number"
+            value={form.minPrice || ''}
+            onChange={(e) => onChange({ ...form, minPrice: e.target.value ? Number(e.target.value) : undefined })}
+            placeholder="50000"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Precio Máximo (€)
+          </label>
+          <input
+            type="number"
+            value={form.maxPrice || ''}
+            onChange={(e) => onChange({ ...form, maxPrice: e.target.value ? Number(e.target.value) : undefined })}
+            placeholder="300000"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Habitaciones Mínimas
+          </label>
+          <input
+            type="number"
+            value={form.minRooms || ''}
+            onChange={(e) => onChange({ ...form, minRooms: e.target.value ? Number(e.target.value) : undefined })}
+            placeholder="2"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Superficie Mínima (m²)
+          </label>
+          <input
+            type="number"
+            value={form.minSurface || ''}
+            onChange={(e) => onChange({ ...form, minSurface: e.target.value ? Number(e.target.value) : undefined })}
+            placeholder="60"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+          />
+        </div>
+
+        <div className="md:col-span-2 flex items-center gap-3">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={form.isActive}
+              onChange={(e) => onChange({ ...form, isActive: e.target.checked })}
+              className="w-5 h-5 text-emerald-600 rounded focus:ring-emerald-500"
+            />
+            <span className="text-sm font-medium text-gray-700">
+              Activar búsqueda automática (cada 5 minutos)
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <div className="flex gap-3 mt-6">
+        <button
+          onClick={onCancel}
+          className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+        >
+          Cancelar
+        </button>
+        <button
+          onClick={onSave}
+          disabled={!form.name || !form.city || loading}
+          className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition"
+        >
+          <Save className="w-4 h-4" />
+          Guardar Filtro
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function FilterCard({ 
+  filter, 
+  onToggle, 
+  onEdit, 
+  onDelete 
+}: { 
+  filter: SearchFilter
+  onToggle: () => void
+  onEdit: () => void
+  onDelete: () => void
+}) {
+  const platform = PLATFORMS.find(p => p.id === filter.platform)
+  
+  return (
+    <div className={`bg-white rounded-xl shadow-sm p-4 border-2 ${filter.isActive ? 'border-emerald-500' : 'border-gray-200'}`}>
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <div className={`w-8 h-8 rounded ${platform?.color} flex items-center justify-center text-white font-bold text-sm`}>
+            {platform?.name[0]}
+          </div>
+          <div>
+            <h4 className="font-semibold text-gray-900">{filter.name}</h4>
+            <p className="text-sm text-gray-500">{platform?.name}</p>
+          </div>
+        </div>
+        <button
+          onClick={onToggle}
+          className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium transition ${
+            filter.isActive 
+              ? 'bg-emerald-100 text-emerald-700' 
+              : 'bg-gray-100 text-gray-500'
+          }`}
+        >
+          <Power className="w-3 h-3" />
+          {filter.isActive ? 'Activo' : 'Inactivo'}
+        </button>
+      </div>
+
+      <div className="space-y-2 mb-4">
+        <div className="flex items-center gap-2 text-sm text-gray-600">
+          <MapPin className="w-4 h-4" />
+          {filter.city} • {OPERATION_TYPES.find(o => o.id === filter.operation)?.name}
+        </div>
+        <div className="flex items-center gap-2 text-sm text-gray-600">
+          <Home className="w-4 h-4" />
+          {filter.propertyType}
+          {filter.minRooms && ` • ${filter.minRooms}+ hab`}
+          {filter.minSurface && ` • ${filter.minSurface}+ m²`}
+        </div>
+        {(filter.minPrice || filter.maxPrice) && (
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <Euro className="w-4 h-4" />
+            {filter.minPrice && `${formatPrice(filter.minPrice)}`}
+            {filter.minPrice && filter.maxPrice && ' - '}
+            {filter.maxPrice && `${formatPrice(filter.maxPrice)}`}
+          </div>
+        )}
+      </div>
+
+      {filter.propertiesFound !== undefined && (
+        <div className="flex items-center gap-2 mb-4 p-2 bg-blue-50 rounded-lg">
+          <TrendingUp className="w-4 h-4 text-blue-600" />
+          <span className="text-sm text-blue-900 font-medium">
+            {filter.propertiesFound} propiedades encontradas
+          </span>
+        </div>
+      )}
+
+      <div className="flex gap-2">
+        <button
+          onClick={onEdit}
+          className="flex-1 px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition"
+        >
+          Editar
+        </button>
+        <button
+          onClick={onDelete}
+          className="px-3 py-2 text-sm bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function PropertyCard({ 
+  property, 
+  onUpdateStatus, 
+  onDelete,
+  formatPrice,
+  formatDate,
+  getPlatformInfo
+}: { 
+  property: Property
+  onUpdateStatus: (id: string, status: Property['status']) => void
+  onDelete: (id: string) => void
+  formatPrice: (price?: number) => string
+  formatDate: (date: string) => string
+  getPlatformInfo: (platform: string) => typeof PLATFORMS[0]
+}) {
+  const platform = getPlatformInfo(property.source)
+  const statusColors = {
+    new: 'bg-blue-100 text-blue-700',
+    viewed: 'bg-gray-100 text-gray-700',
+    interested: 'bg-yellow-100 text-yellow-700',
+    contacted: 'bg-purple-100 text-purple-700',
+    imported: 'bg-emerald-100 text-emerald-700',
+    discarded: 'bg-red-100 text-red-700'
+  }
+
+  const statusLabels = {
+    new: 'Nueva',
+    viewed: 'Vista',
+    interested: 'Interesante',
+    contacted: 'Contactada',
+    imported: 'Importada',
+    discarded: 'Descartada'
+  }
+
+  return (
+    <div className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition">
+      {/* Image placeholder */}
+      <div className="h-48 bg-gradient-to-br from-gray-200 to-gray-300 relative">
+        <div className="absolute top-3 left-3">
+          <span className={`px-3 py-1 rounded-full text-sm font-medium ${platform.color} text-white`}>
+            {platform.name}
+          </span>
+        </div>
+        <div className="absolute top-3 right-3">
+          <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[property.status]}`}>
+            {statusLabels[property.status]}
+          </span>
+        </div>
+        {property.data.images && property.data.images[0] && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img 
+            src={property.data.images[0]} 
+            alt={property.data.title || 'Property image'}
+            className="w-full h-full object-cover"
+          />
+        )}
+      </div>
+
+      <div className="p-4">
+        <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
+          {property.data.title || 'Sin título'}
+        </h3>
+
+        <div className="space-y-2 mb-4">
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <MapPin className="w-4 h-4" />
+            {property.data.city || 'N/A'}
+          </div>
+          <div className="flex items-center gap-2 text-sm font-semibold text-emerald-600">
+            <Euro className="w-4 h-4" />
+            {formatPrice(property.data.price)}
+          </div>
+          <div className="flex items-center gap-4 text-sm text-gray-600">
+            {property.data.rooms && (
+              <span className="flex items-center gap-1">
+                <Home className="w-4 h-4" />
+                {property.data.rooms} hab
+              </span>
+            )}
+            {property.data.surface && (
+              <span className="flex items-center gap-1">
+                <Layers className="w-4 h-4" />
+                {property.data.surface} m²
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 text-xs text-gray-500 mb-4">
+          <Clock className="w-3 h-3" />
+          {formatDate(property.created_at)}
+        </div>
+
+        <div className="flex gap-2">
+          <a
+            href={property.source_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition text-sm"
+          >
+            <ExternalLink className="w-4 h-4" />
+            Ver Anuncio
+          </a>
+          <button
+            onClick={() => onDelete(property.id)}
+            className="px-3 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+
+        <select
+          value={property.status}
+          onChange={(e) => onUpdateStatus(property.id, e.target.value as Property['status'])}
+          className="w-full mt-2 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+        >
+          <option value="new">Nueva</option>
+          <option value="viewed">Vista</option>
+          <option value="interested">Interesante</option>
+          <option value="contacted">Contactada</option>
+          <option value="imported">Importada</option>
+          <option value="discarded">Descartada</option>
+        </select>
+      </div>
+    </div>
+  )
+}
+
+function formatPrice(price?: number) {
+  if (!price) return 'N/A'
+  return new Intl.NumberFormat('es-ES', {
+    style: 'currency',
+    currency: 'EUR',
+    maximumFractionDigits: 0
+  }).format(price)
+}
+
+function formatDate(date: string) {
+  return new Date(date).toLocaleDateString('es-ES', {
+    day: '2-digit',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
 }

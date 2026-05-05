@@ -8,10 +8,9 @@ import { useState } from 'react'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: Home },
-  { name: 'Propiedades', href: '/dashboard/properties', icon: Building2 },
+  { name: '🏠 Propiedades', href: '/dashboard/properties', icon: Building2 },
   { name: 'Contactos', href: '/dashboard/contacts', icon: Users },
   { name: 'Contratos', href: '/dashboard/contracts', icon: FileText },
-  { name: 'Captura Auto', href: '/dashboard/capture', icon: Bell },
   { name: 'Documentos', href: '/dashboard/documents', icon: FolderOpen },
   { name: 'Analíticas', href: '/dashboard/analytics', icon: BarChart3 },
   { name: 'Configuración', href: '/dashboard/config', icon: Settings },
