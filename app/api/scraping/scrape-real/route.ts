@@ -44,10 +44,13 @@ function randomDelay(min: number, max: number): Promise<void> {
 }
 
 async function scrapeIdealistaReal(filters: ScrapingFilters): Promise<Property[]> {
-  const properties: Property[] = []
+  let properties: Property[] = []
   
   try {
-    // Construir URL de búsqueda
+    // MÉTODO: Buscar propiedades usando múltiples técnicas
+    console.log('🔍 Buscando propiedades de Idealista para:', filters.city)
+    
+    // Construir URL de búsqueda  
     const operationPath = filters.operation === 'sale' ? 'venta-viviendas' : 'alquiler-viviendas'
     const citySlug = filters.city.toLowerCase()
       .normalize('NFD')
@@ -66,20 +69,27 @@ async function scrapeIdealistaReal(filters: ScrapingFilters): Promise<Property[]
     
     console.log('🔍 Scraping Idealista REAL:', url)
     
-    // Headers realistas para evitar bloqueos
+    // Headers realistas para evitar bloqueos - MEJORADOS
     const headers = {
       'User-Agent': getRandomUserAgent(),
-      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-      'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+      'Accept-Language': 'es-ES,es;q=0.9,en-US;q=0.8,en;q=0.7',
       'Accept-Encoding': 'gzip, deflate, br',
       'Connection': 'keep-alive',
       'Upgrade-Insecure-Requests': '1',
+      'Sec-Fetch-Dest': 'document',
+      'Sec-Fetch-Mode': 'navigate',
+      'Sec-Fetch-Site': 'none',
+      'Sec-Fetch-User': '?1',
       'Cache-Control': 'max-age=0',
-      'Referer': 'https://www.google.com/',
+      'DNT': '1',
+      'sec-ch-ua': '"Chromium";v="120", "Google Chrome";v="120", "Not-A.Brand";v="99"',
+      'sec-ch-ua-mobile': '?0',
+      'sec-ch-ua-platform': '"macOS"',
     }
     
     // Delay aleatorio antes de hacer el request (comportamiento humano)
-    await randomDelay(1000, 3000)
+    await randomDelay(2000, 5000)
     
     // Fetch del HTML
     const response = await fetch(url, {
