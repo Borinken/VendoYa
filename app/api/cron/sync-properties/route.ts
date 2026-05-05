@@ -52,6 +52,9 @@ export async function GET(request: NextRequest) {
     }
 
     console.log('🤖 Iniciando sincronización automática (cron minuto a minuto)...')
+    
+    // Obtener la URL base del request para hacer llamadas internas
+    const baseUrl = request.url.split('/api/')[0]
 
     // Verificar si auto-sync está habilitado
     const { data: config } = await supabase
@@ -94,7 +97,7 @@ export async function GET(request: NextRequest) {
     for (const filter of filters) {
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_APP_URL || 'https://vendoya-75k9fzqpf-borinkens-projects.vercel.app'}/api/scraping/scrape-mock`,
+          `${baseUrl}/api/scraping/scrape-mock`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
