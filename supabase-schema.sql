@@ -79,7 +79,7 @@ CREATE TABLE IF NOT EXISTS properties (
   description TEXT,
   property_type VARCHAR(50) DEFAULT 'apartment' CHECK (property_type IN ('apartment', 'house', 'penthouse', 'duplex', 'studio', 'villa', 'townhouse', 'commercial', 'office', 'warehouse', 'land', 'garage', 'storage')),
   operation_type VARCHAR(20) DEFAULT 'sale' CHECK (operation_type IN ('sale', 'rent', 'both')),
-  price DECIMAL(12, 2) NOT NULL,
+  price DECIMAL(12, 2),
   monthly_rent DECIMAL(10, 2),
   surface DECIMAL(10, 2) NOT NULL,
   rooms INTEGER DEFAULT 0,
@@ -272,6 +272,20 @@ CREATE TRIGGER update_rentals_updated_at BEFORE UPDATE ON rentals FOR EACH ROW E
 CREATE TRIGGER update_incidents_updated_at BEFORE UPDATE ON incidents FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_capture_filters_updated_at BEFORE UPDATE ON capture_filters FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_captured_properties_updated_at BEFORE UPDATE ON captured_properties FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ========================================
+-- TABLA: system_config (Configuración del Sistema)
+-- ========================================
+CREATE TABLE IF NOT EXISTS system_config (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  config_key VARCHAR(100) UNIQUE NOT NULL,
+  config_value TEXT,
+  is_encrypted BOOLEAN DEFAULT FALSE,
+  description TEXT,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TRIGGER update_system_config_updated_at BEFORE UPDATE ON system_config FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- ========================================
 -- DATOS DE PRUEBA (Opcional)
