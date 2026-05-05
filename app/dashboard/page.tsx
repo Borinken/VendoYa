@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Building2, Users, TrendingUp, MapPin, ArrowUp, ArrowDown, Euro } from 'lucide-react'
+import { Users, TrendingUp, MapPin, ArrowUp, ArrowDown, Euro } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 
@@ -95,57 +95,57 @@ export default function DashboardPage() {
 
   // Data for charts
   const monthlyData = [
-    { month: 'Ene', ventas: 45000, alquileres: 12000 },
-    { month: 'Feb', ventas: 52000, alquileres: 15000 },
-    { month: 'Mar', ventas: 48000, alquileres: 13500 },
-    { month: 'Abr', ventas: 61000, alquileres: 16000 },
-    { month: 'May', ventas: 55000, alquileres: 14500 },
-    { month: 'Jun', ventas: 67000, alquileres: 18000 },
+    { month: 'Ene', analisis: 45, inversores: 12 },
+    { month: 'Feb', analisis: 52, inversores: 18 },
+    { month: 'Mar', analisis: 48, inversores: 15 },
+    { month: 'Abr', analisis: 61, inversores: 22 },
+    { month: 'May', analisis: 78, inversores: 28 },
+    { month: 'Jun', analisis: 92, inversores: 35 },
   ]
 
   const propertyTypes = [
-    { name: 'Pisos', value: 35, color: '#3B82F6' },
+    { name: 'Pisos', value: 45, color: '#3B82F6' },
     { name: 'Chalets', value: 25, color: '#8B5CF6' },
     { name: 'Locales', value: 20, color: '#10B981' },
-    { name: 'Garajes', value: 20, color: '#F59E0B' },
+    { name: 'Otros', value: 10, color: '#F59E0B' },
   ]
 
   const statCards = [
     {
-      name: 'Propiedades Totales',
+      name: 'Análisis Realizados',
       value: stats.totalProperties,
-      icon: Building2,
+      icon: TrendingUp,
       bgColor: 'bg-emerald-100',
       iconColor: 'text-emerald-600',
-      change: '+12%',
+      change: '+32%',
       positive: true,
     },
     {
-      name: 'Disponibles',
-      value: stats.availableProperties,
-      icon: TrendingUp,
+      name: 'Inversores Activos',
+      value: stats.totalContacts,
+      icon: Users,
       bgColor: 'bg-cyan-100',
       iconColor: 'text-cyan-600',
+      change: '+45%',
+      positive: true,
+    },
+    {
+      name: 'ROI Promedio',
+      value: '4.2%',
+      icon: TrendingUp,
+      bgColor: 'bg-violet-100',
+      iconColor: 'text-violet-600',
       change: '+8%',
       positive: true,
     },
     {
-      name: 'Contactos',
-      value: stats.totalContacts,
-      icon: Users,
-      bgColor: 'bg-violet-100',
-      iconColor: 'text-violet-600',
-      change: '+23%',
-      positive: true,
-    },
-    {
-      name: 'Ingresos del Mes',
-      value: formatCurrency(stats.monthlyRevenue),
+      name: 'Volumen Analizado',
+      value: formatCurrency(stats.monthlyRevenue * 10),
       icon: Euro,
       bgColor: 'bg-amber-100',
       iconColor: 'text-amber-600',
-      change: '-5%',
-      positive: false,
+      change: '+28%',
+      positive: true,
     },
   ]
 
@@ -156,10 +156,10 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-4xl font-bold text-gray-900 mb-2">
-              Dashboard
+              Plataforma de Análisis de Inversión
             </h1>
             <p className="text-gray-600 text-lg">
-              Bienvenido de nuevo, aquí tienes un resumen de tu actividad
+              Analiza propiedades con IA y atrae inversores con datos profesionales
             </p>
           </div>
           <div className="text-right bg-white rounded-lg px-4 py-3 border border-gray-200">
@@ -218,8 +218,8 @@ export default function DashboardPage() {
         <div className="lg:col-span-2 rounded-2xl bg-white p-6 shadow-sm border border-gray-200">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Ingresos Mensuales</h2>
-              <p className="text-sm text-gray-600 mt-1">Comparativa ventas vs alquileres</p>
+              <h2 className="text-2xl font-bold text-gray-900">Actividad de Inversores</h2>
+              <p className="text-sm text-gray-600 mt-1">Análisis realizados vs nuevos inversores</p>
             </div>
             <select className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-500">
               <option>Últimos 6 meses</option>
@@ -243,7 +243,7 @@ export default function DashboardPage() {
               <Legend wrapperStyle={{ color: '#6B7280' }} />
               <Line 
                 type="monotone" 
-                dataKey="ventas" 
+                dataKey="analisis" 
                 stroke="#10B981" 
                 strokeWidth={3} 
                 dot={{ fill: '#10B981', r: 5 }}
@@ -251,7 +251,7 @@ export default function DashboardPage() {
               />
               <Line 
                 type="monotone" 
-                dataKey="alquileres" 
+                dataKey="inversores" 
                 stroke="#14B8A6" 
                 strokeWidth={3}
                 dot={{ fill: '#14B8A6', r: 5 }}
@@ -263,7 +263,7 @@ export default function DashboardPage() {
 
         {/* Property Types Pie Chart */}
         <div className="rounded-2xl bg-white p-6 shadow-sm border border-gray-200">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Tipos de Propiedad</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Propiedades Analizadas</h2>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie
@@ -298,9 +298,9 @@ export default function DashboardPage() {
         {/* Recent Properties */}
         <div className="rounded-2xl bg-white p-6 shadow-sm border border-gray-200">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Propiedades Recientes</h2>
-            <a href="/dashboard/properties" className="text-sm font-medium text-emerald-500 hover:text-emerald-600 flex items-center space-x-1">
-              <span>Ver todas</span>
+            <h2 className="text-2xl font-bold text-gray-900">Análisis Recientes</h2>
+            <a href="/dashboard/investors" className="text-sm font-medium text-emerald-500 hover:text-emerald-600 flex items-center space-x-1">
+              <span>Ver todos</span>
               <ArrowUp className="w-4 h-4 rotate-90" />
             </a>
           </div>
@@ -310,7 +310,7 @@ export default function DashboardPage() {
                 <div key={property.id} className="flex items-center justify-between p-4 rounded-xl bg-gray-50 border border-gray-200 hover:bg-gray-100 hover:border-gray-300 transition-all">
                   <div className="flex items-center space-x-3">
                     <div className="w-12 h-12 rounded-lg bg-emerald-100 flex items-center justify-center">
-                      <Building2 className="w-6 h-6 text-emerald-600" />
+                      <TrendingUp className="w-6 h-6 text-emerald-600" />
                     </div>
                     <div>
                       <p className="font-semibold text-gray-900">{property.title}</p>
@@ -322,18 +322,23 @@ export default function DashboardPage() {
                   </div>
                   <div className="text-right">
                     <p className="font-bold text-gray-900 mb-1">{formatCurrency(property.price)}</p>
-                    <span className={`text-xs px-3 py-1 rounded-full font-medium ${
-                      property.status === 'available' 
-                        ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' 
-                        : 'bg-gray-200 text-gray-700 border border-gray-300'
-                    }`}>
-                      {property.status === 'available' ? 'Disponible' : property.status}
+                    <span className="text-xs px-3 py-1 rounded-full font-medium bg-emerald-100 text-emerald-700 border border-emerald-200">
+                      ROI: {(Math.random() * 2 + 3).toFixed(1)}%
                     </span>
                   </div>
                 </div>
               ))
             ) : (
-              <p className="text-gray-500 text-center py-8">No hay propiedades todavía</p>
+              <div className="text-center py-8">
+                <p className="text-gray-500 mb-4">No hay análisis todavía</p>
+                <a 
+                  href="/dashboard/investors" 
+                  className="inline-flex items-center px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors"
+                >
+                  <TrendingUp className="w-4 h-4 mr-2" />
+                  Analizar Primera Propiedad
+                </a>
+              </div>
             )}
           </div>
         </div>
@@ -341,7 +346,7 @@ export default function DashboardPage() {
         {/* Recent Contacts */}
         <div className="rounded-2xl bg-white p-6 shadow-sm border border-gray-200">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Contactos Recientes</h2>
+            <h2 className="text-2xl font-bold text-gray-900">Inversores Recientes</h2>
             <a href="/dashboard/contacts" className="text-sm font-medium text-emerald-500 hover:text-emerald-600 flex items-center space-x-1">
               <span>Ver todos</span>
               <ArrowUp className="w-4 h-4 rotate-90" />

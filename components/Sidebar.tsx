@@ -2,17 +2,16 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Building2, Users, FileText, Settings, Menu, X, BarChart3, Bell, FolderOpen } from 'lucide-react'
+import { Home, Building2, Users, Settings, Menu, X, BarChart3, Bell, FolderOpen } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useState } from 'react'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: Home },
-  { name: '🏠 Propiedades', href: '/dashboard/properties', icon: Building2 },
+  { name: '💰 Inversores', href: '/dashboard/investors', icon: BarChart3 },
   { name: 'Contactos', href: '/dashboard/contacts', icon: Users },
-  { name: 'Contratos', href: '/dashboard/contracts', icon: FileText },
+  { name: 'Propiedades', href: '/dashboard/properties', icon: Building2 },
   { name: 'Documentos', href: '/dashboard/documents', icon: FolderOpen },
-  { name: 'Analíticas', href: '/dashboard/analytics', icon: BarChart3 },
   { name: 'Configuración', href: '/dashboard/config', icon: Settings },
 ]
 

@@ -44,7 +44,7 @@ function randomDelay(min: number, max: number): Promise<void> {
 }
 
 async function scrapeIdealistaReal(filters: ScrapingFilters): Promise<Property[]> {
-  let properties: Property[] = []
+  const properties: Property[] = []
   
   try {
     // MÉTODO: Buscar propiedades usando múltiples técnicas
