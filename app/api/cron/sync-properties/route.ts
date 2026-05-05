@@ -94,7 +94,7 @@ export async function GET(request: NextRequest) {
     for (const filter of filters) {
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_APP_URL || 'https://vendoya-75k9fzqpf-borinkens-projects.vercel.app'}/api/scraping/scrape`,
+          `${process.env.NEXT_PUBLIC_APP_URL || 'https://vendoya-75k9fzqpf-borinkens-projects.vercel.app'}/api/scraping/scrape-mock`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

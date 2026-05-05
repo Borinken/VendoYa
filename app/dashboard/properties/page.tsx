@@ -269,16 +269,23 @@ export default function PropertiesPage() {
   const saveFilter = async () => {
     setLoading(true)
     try {
+      // Validar campos requeridos
+      if (!filterForm.name || !filterForm.city) {
+        alert('⚠️ Por favor completa los campos: Nombre y Ciudad')
+        setLoading(false)
+        return
+      }
+
       const filterData = {
         name: filterForm.name,
         source: filterForm.platform,
         operation_type: filterForm.operation,
         property_type: filterForm.propertyType,
         city: filterForm.city,
-        min_price: filterForm.minPrice,
-        max_price: filterForm.maxPrice,
-        min_rooms: filterForm.minRooms,
-        min_surface: filterForm.minSurface,
+        min_price: filterForm.minPrice || null,
+        max_price: filterForm.maxPrice || null,
+        min_rooms: filterForm.minRooms || null,
+        min_surface: filterForm.minSurface || null,
         is_active: filterForm.isActive,
         notify_whatsapp: false,
         filters: {
@@ -297,12 +304,18 @@ export default function PropertiesPage() {
           .from('capture_filters')
           .update(filterData)
           .eq('id', editingFilter.id)
-        if (error) throw error
+        if (error) {
+          console.error('Error updating filter:', error)
+          throw new Error(`Error al actualizar: ${error.message || JSON.stringify(error)}`)
+        }
       } else {
         const { error } = await supabase
           .from('capture_filters')
           .insert([filterData])
-        if (error) throw error
+        if (error) {
+          console.error('Error inserting filter:', error)
+          throw new Error(`Error al insertar: ${error.message || JSON.stringify(error)}`)
+        }
       }
 
       alert('✅ Filtro guardado correctamente')
@@ -310,7 +323,8 @@ export default function PropertiesPage() {
       resetFilterForm()
     } catch (error) {
       console.error('Error saving filter:', error)
-      alert('❌ Error al guardar filtro')
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido'
+      alert(`❌ Error al guardar filtro:\n${errorMessage}`)
     } finally {
       setLoading(false)
     }
