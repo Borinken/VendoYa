@@ -186,6 +186,22 @@ export default function PropertiesPage() {
   const saveCredential = async (platform: string, username: string, password: string) => {
     setLoading(true)
     try {
+      // Validación básica
+      if (!username || !password) {
+        alert('⚠️ Por favor, completa todos los campos')
+        setLoading(false)
+        return
+      }
+
+      // Validar formato de email si es username
+      if (username && !username.includes('@')) {
+        const confirm = window.confirm('⚠️ El usuario no parece ser un email válido. ¿Deseas continuar de todas formas?')
+        if (!confirm) {
+          setLoading(false)
+          return
+        }
+      }
+
       const credentialsToSave = {
         [`${platform}_username`]: username,
         [`${platform}_password`]: password
@@ -482,6 +498,22 @@ export default function PropertiesPage() {
                 Conecta al menos 1 plataforma para continuar. No es necesario conectar todas.
               </p>
             </div>
+
+            {/* Advertencia de seguridad */}
+            <div className="bg-amber-50 border-2 border-amber-400 rounded-xl p-4 mb-6">
+              <div className="flex gap-3">
+                <Shield className="w-6 h-6 text-amber-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <h3 className="text-amber-900 font-bold mb-1">⚠️ Usa solo credenciales reales</h3>
+                  <p className="text-amber-800 text-sm leading-relaxed">
+                    Debes usar las credenciales <strong>reales</strong> de tus cuentas de Idealista, Fotocasa o RealAdvisor. 
+                    Todas las credenciales se guardan <strong>encriptadas con AES-256</strong> para máxima seguridad. 
+                    No uses credenciales de prueba como &ldquo;admin&rdquo; - el sistema solo funciona con cuentas reales verificadas.
+                  </p>
+                </div>
+              </div>
+            </div>
+
             <div className="flex items-center justify-between mb-4">
               <div className="text-sm text-gray-600 font-medium">
                 {connectedPlatforms} de {PLATFORMS.length} plataformas conectadas
@@ -737,7 +769,7 @@ function CredentialCard({
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder={platform.placeholder.username}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent placeholder:text-gray-500 text-gray-900"
               />
             </div>
 
@@ -751,7 +783,7 @@ function CredentialCard({
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder={platform.placeholder.password}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent placeholder:text-gray-500 text-gray-900"
                 />
                 <button
                   type="button"
@@ -820,7 +852,7 @@ function FilterForm({
             value={form.name}
             onChange={(e) => onChange({ ...form, name: e.target.value })}
             placeholder="Ej: Pisos Barcelona Centro"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 placeholder:text-gray-500 text-gray-900"
           />
         </div>
 
@@ -850,7 +882,7 @@ function FilterForm({
             value={form.city}
             onChange={(e) => onChange({ ...form, city: e.target.value })}
             placeholder="Barcelona, Madrid, Valencia..."
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 placeholder:text-gray-500 text-gray-900"
           />
         </div>
 
@@ -893,7 +925,7 @@ function FilterForm({
             value={form.minPrice || ''}
             onChange={(e) => onChange({ ...form, minPrice: e.target.value ? Number(e.target.value) : undefined })}
             placeholder="50000"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 placeholder:text-gray-500 text-gray-900"
           />
         </div>
 
@@ -906,7 +938,7 @@ function FilterForm({
             value={form.maxPrice || ''}
             onChange={(e) => onChange({ ...form, maxPrice: e.target.value ? Number(e.target.value) : undefined })}
             placeholder="300000"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 placeholder:text-gray-500 text-gray-900"
           />
         </div>
 
@@ -919,7 +951,7 @@ function FilterForm({
             value={form.minRooms || ''}
             onChange={(e) => onChange({ ...form, minRooms: e.target.value ? Number(e.target.value) : undefined })}
             placeholder="2"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 placeholder:text-gray-500 text-gray-900"
           />
         </div>
 
@@ -932,7 +964,7 @@ function FilterForm({
             value={form.minSurface || ''}
             onChange={(e) => onChange({ ...form, minSurface: e.target.value ? Number(e.target.value) : undefined })}
             placeholder="60"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 placeholder:text-gray-500 text-gray-900"
           />
         </div>
 
