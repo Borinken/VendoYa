@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
     for (const filter of filters) {
       try {
         const response = await fetch(
-          `${baseUrl}/api/scraping/scrape-mock`,
+          `${baseUrl}/api/scraping/scrape-real`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
