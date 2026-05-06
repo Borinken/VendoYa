@@ -103,12 +103,15 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Triggers para updated_at
+DROP TRIGGER IF EXISTS update_email_logs_updated_at ON email_logs;
 CREATE TRIGGER update_email_logs_updated_at BEFORE UPDATE ON email_logs
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_tasks_updated_at ON tasks;
 CREATE TRIGGER update_tasks_updated_at BEFORE UPDATE ON tasks
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_email_accounts_updated_at ON email_accounts;
 CREATE TRIGGER update_email_accounts_updated_at BEFORE UPDATE ON email_accounts
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
@@ -185,12 +188,15 @@ ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE email_accounts ENABLE ROW LEVEL SECURITY;
 
 -- Políticas RLS (permitir todo para usuarios autenticados)
+DROP POLICY IF EXISTS "Allow all for authenticated users" ON email_logs;
 CREATE POLICY "Allow all for authenticated users" ON email_logs
   FOR ALL USING (true);
 
+DROP POLICY IF EXISTS "Allow all for authenticated users" ON tasks;
 CREATE POLICY "Allow all for authenticated users" ON tasks
   FOR ALL USING (true);
 
+DROP POLICY IF EXISTS "Allow all for authenticated users" ON email_accounts;
 CREATE POLICY "Allow all for authenticated users" ON email_accounts
   FOR ALL USING (true);
 

@@ -1,41 +1,133 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { GmailClient } from '@/lib/gmail-client'
+import { createClient } from '@supabase/supabase-js'
 
-export const runtime = 'edge'
+export const runtime = 'nodejs'
+
+function getSupabaseClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY!;
+  return createClient(supabaseUrl, supabaseServiceKey);
+}
 
 /**
  * POST /api/email/sync
  * Sincroniza emails de Gmail y los procesa automáticamente
+ * Ahora carga automáticamente las credenciales de la cuenta del usuario
  */
 export async function POST(request: NextRequest) {
   try {
+    const supabase = getSupabaseClient();
     const body = await request.json()
     
-    if (!body.accessToken || !body.email) {
-      return NextResponse.json(
-        { success: false, error: 'Faltan accessToken y email' },
-        { status: 400 }
-      )
+    // Opción 1: Sincronizar cuenta específica por ID
+    if (body.accountId) {
+      const { data: account, error } = await supabase
+        .from('email_accounts')
+        .select('*')
+        .eq('id', body.accountId)
+        .eq('active', true)
+        .single();
+
+      if (error || !account) {
+        return NextResponse.json(
+          { success: false, error: 'Cuenta no encontrada o inactiva' },
+          { status: 404 }
+        );
+      }
+
+      const result = await syncAccount(account, body.maxResults || 10, request);
+      return NextResponse.json(result);
     }
-    
-    const maxResults = body.maxResults || 10
-    const query = body.query || 'is:unread'
+
+    // Opción 2: Sincronizar todas las cuentas activas
+    const { data: accounts, error } = await supabase
+      .from('email_accounts')
+      .select('*')
+      .eq('active', true);
+
+    if (error) throw error;
+
+    if (!accounts || accounts.length === 0) {
+      return NextResponse.json({
+        success: false,
+        error: 'No hay cuentas de email configuradas. Configura tu Gmail primero.',
+        redirect: '/dashboard/email-config'
+      }, { status: 404 });
+    }
+
+    // Sincronizar todas las cuentas
+    const results = await Promise.all(
+      accounts.map(account => syncAccount(account, body.maxResults || 10, request))
+    );
+
+    const totalProcessed = results.reduce((sum, r) => sum + (r.processed || 0), 0);
+    const totalErrors = results.filter(r => !r.success).length;
+
+    return NextResponse.json({
+      success: true,
+      totalAccounts: accounts.length,
+      totalProcessed,
+      totalErrors,
+      results
+    });
+
+  } catch (error: unknown) {
+    console.error('Error en sincronización:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Error en sincronización';
+    return NextResponse.json(
+      { success: false, error: errorMessage },
+      { status: 500 }
+    );
+  }
+}
+
+interface EmailAccount {
+  id: string;
+  email: string;
+  credentials: { access_token?: string };
+}
+
+async function syncAccount(account: EmailAccount, maxResults: number, request: NextRequest) {
+  const email = account.email;
+  const supabase = getSupabaseClient();
+  
+  try {
+    const credentials = account.credentials;
+    const accessToken = credentials?.access_token;
+
+    if (!accessToken) {
+      return {
+        success: false,
+        email,
+        error: 'No se encontró access token'
+      };
+    }
+
+    const query = 'is:unread'
     
     // Crear cliente de Gmail
     const gmailClient = new GmailClient({
-      accessToken: body.accessToken,
-      email: body.email
+      accessToken,
+      email
     })
     
     // Obtener mensajes recientes
     const messages = await gmailClient.getRecentMessages(maxResults, query)
     
     if (messages.length === 0) {
-      return NextResponse.json({
+      // Actualizar last_check
+      await supabase
+        .from('email_accounts')
+        .update({ last_check: new Date().toISOString() })
+        .eq('id', account.id);
+
+      return {
         success: true,
+        email,
         message: 'No hay emails nuevos',
         processed: 0
-      })
+      };
     }
     
     // Procesar cada mensaje
@@ -89,28 +181,46 @@ export async function POST(request: NextRequest) {
         })
       }
     }
+
+    // Actualizar last_check y last_error
+    await supabase
+      .from('email_accounts')
+      .update({ 
+        last_check: new Date().toISOString(),
+        last_error: errors.length > 0 ? `${errors.length} errores` : null
+      })
+      .eq('id', account.id);
     
-    return NextResponse.json({
+    return {
       success: true,
+      email,
       message: `Procesados ${processed.length} de ${messages.length} emails`,
-      data: {
-        total: messages.length,
-        processed: processed.length,
-        errors: errors.length,
-        details: {
-          processed,
-          errors
-        }
+      processed: processed.length,
+      errors: errors.length,
+      details: {
+        processed,
+        errors
       }
-    })
+    };
     
   } catch (error: unknown) {
-    console.error('Error syncing emails:', error)
-    const errorMessage = error instanceof Error ? error.message : 'Error desconocido'
-    return NextResponse.json(
-      { success: false, error: errorMessage },
-      { status: 500 }
-    )
+    console.error('Error syncing account:', email, error);
+    const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+
+    // Guardar error en la cuenta
+    await supabase
+      .from('email_accounts')
+      .update({ 
+        last_check: new Date().toISOString(),
+        last_error: errorMessage
+      })
+      .eq('id', account.id);
+
+    return {
+      success: false,
+      email,
+      error: errorMessage
+    };
   }
 }
 
