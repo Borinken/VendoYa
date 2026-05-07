@@ -322,7 +322,7 @@ async function scheduleFollowUpMessages(
 async function sendWhatsAppValuation(
   phone: string,
   name: string,
-  valuation: any,
+  valuation: { estimatedValue: number; minValue: number; maxValue: number },
   leadId: string
 ) {
   // TODO: Integrar con WhatsApp Business API (Twilio, WhatsApp Cloud API, etc.)

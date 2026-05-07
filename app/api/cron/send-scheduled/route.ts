@@ -101,7 +101,7 @@ export async function GET(request: Request) {
             .eq('id', message.id);
 
           // Actualizar flags en urgent_leads
-          const updateData: any = {};
+          const updateData: Record<string, boolean | Date> = {};
           if (message.template === 'day_1') {
             updateData.follow_up_day_1_sent = true;
           } else if (message.template === 'day_3') {
@@ -167,7 +167,7 @@ export async function GET(request: Request) {
 }
 
 // Enviar WhatsApp (integración con Twilio o WhatsApp Business API)
-async function sendWhatsAppMessage(lead: any, content: string): Promise<boolean> {
+async function sendWhatsAppMessage(lead: { phone: string; name?: string }, content: string): Promise<boolean> {
   try {
     // TODO: Integrar con tu proveedor de WhatsApp (Twilio, WhatsApp Cloud API, etc.)
     console.log(`[WhatsApp] Enviando a ${lead.phone}:`, content);
@@ -213,7 +213,7 @@ async function sendWhatsAppMessage(lead: any, content: string): Promise<boolean>
 }
 
 // Enviar Email
-async function sendEmailMessage(lead: any, content: string): Promise<boolean> {
+async function sendEmailMessage(lead: { email?: string; name?: string }, content: string): Promise<boolean> {
   try {
     // TODO: Integrar con tu proveedor de email (Resend, SendGrid, etc.)
     console.log(`[Email] Enviando a ${lead.email}:`, content);
@@ -252,7 +252,7 @@ async function sendEmailMessage(lead: any, content: string): Promise<boolean> {
 }
 
 // Enviar SMS
-async function sendSMSMessage(lead: any, content: string): Promise<boolean> {
+async function sendSMSMessage(lead: { phone: string; name?: string }, content: string): Promise<boolean> {
   try {
     // TODO: Integrar con tu proveedor de SMS (Twilio, etc.)
     console.log(`[SMS] Enviando a ${lead.phone}:`, content);

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { TrendingUp, Home, Phone, Mail, MessageCircle, Check, Clock, Users } from 'lucide-react';
+import { TrendingUp, Home, Phone, MessageCircle, Check, Clock, Users } from 'lucide-react';
 
 interface Valuation {
   estimatedValue: number;
@@ -35,12 +35,6 @@ export default function ValuationPage() {
   const [loading, setLoading] = useState(true);
   const [showContactForm, setShowContactForm] = useState(false);
 
-  useEffect(() => {
-    if (leadId) {
-      fetchLead();
-    }
-  }, [leadId]);
-
   const fetchLead = async () => {
     try {
       const response = await fetch(`/api/leads/${leadId}`);
@@ -54,6 +48,13 @@ export default function ValuationPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (leadId) {
+      fetchLead();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [leadId]);
 
   const handleRequestCall = async () => {
     setShowContactForm(true);
