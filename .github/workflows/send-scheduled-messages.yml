@@ -13,7 +13,7 @@ jobs:
         run: |
           curl -X GET \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            https://vendoya-6do7vkzvd-borinkens-projects.vercel.app/api/cron/send-scheduled
+            https://vendoya-kvaagblzr-borinkens-projects.vercel.app/api/cron/send-scheduled
       
       - name: Mostrar resultado
         run: echo "✅ Mensajes procesados"
