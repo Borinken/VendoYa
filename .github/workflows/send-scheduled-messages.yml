@@ -1,0 +1,19 @@
+name: Enviar Mensajes Programados
+on:
+  schedule:
+    # Ejecutar cada 15 minutos
+    - cron: '*/15 * * * *'
+  workflow_dispatch: # Permite ejecución manual
+
+jobs:
+  send-scheduled-messages:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ejecutar cron de mensajes
+        run: |
+          curl -X GET \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            https://vendoya-6do7vkzvd-borinkens-projects.vercel.app/api/cron/send-scheduled
+      
+      - name: Mostrar resultado
+        run: echo "✅ Mensajes procesados"
