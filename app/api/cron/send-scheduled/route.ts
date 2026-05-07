@@ -109,7 +109,7 @@ export async function GET(request: Request) {
           } else if (message.template === 'day_7') {
             updateData.follow_up_day_7_sent = true;
           }
-          updateData.last_follow_up_at = new Date().toISOString();
+          updateData.last_follow_up_at = new Date();
 
           await supabase
             .from('urgent_leads')
