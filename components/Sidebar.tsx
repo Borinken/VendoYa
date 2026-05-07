@@ -2,12 +2,13 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Building2, Users, Settings, Menu, X, BarChart3, Bell, FolderOpen, Mail } from 'lucide-react'
+import { Home, Building2, Users, Settings, Menu, X, BarChart3, Bell, FolderOpen, Mail, TrendingUp } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useState } from 'react'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: Home },
+  { name: '🎯 Captar Propietarios', href: '/dashboard/captar-propietarios', icon: TrendingUp },
   { name: '💰 Inversores', href: '/dashboard/investors', icon: BarChart3 },
   { name: 'Contactos', href: '/dashboard/contacts', icon: Users },
   { name: 'Propiedades', href: '/dashboard/properties', icon: Building2 },
