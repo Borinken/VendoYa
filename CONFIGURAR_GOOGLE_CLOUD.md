@@ -140,6 +140,27 @@ vercel --prod
 
 ---
 
+## 📍 PASO 9: Configurar GitHub Secret (Cron Job)
+
+Para activar el envío automático de mensajes de seguimiento cada 15 minutos:
+
+1. Ve a: https://github.com/Borinken/VendoYa/settings/secrets/actions
+2. Click **"New repository secret"**
+3. Completa:
+   - **Name:** `CRON_SECRET`
+   - **Value:** `0bda0d1c040c9b6e8d982fca93db997fb1ab1c17d47b11f25cccfe3d8e6feb17`
+4. Click **"Add secret"**
+
+**¿Para qué sirve?**
+- Permite que GitHub Actions ejecute el cron job `/api/cron/send-scheduled`
+- Envía mensajes automáticos a leads en días 1, 3 y 7
+- Sin esto, el seguimiento automático no funcionará
+
+**Monitorear ejecuciones:**
+https://github.com/Borinken/VendoYa/actions/workflows/send-scheduled-messages.yml
+
+---
+
 ## 🆘 Problemas comunes
 
 ### "redirect_uri_mismatch"
