@@ -5,26 +5,18 @@ on:
     - cron: '*/15 * * * *'
   workflow_dispatch: # Permite ejecución manual
 
+permissions:
+  contents: read
+
 jobs:
   send-scheduled-messages:
     runs-on: ubuntu-latest
     steps:
       - name: Ejecutar cron de mensajes
         run: |
-          RESPONSE=$(curl -s -w "\n%{http_code}" \
+          curl -f -s \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            https://vendoya-kvaagblzr-borinkens-projects.vercel.app/api/cron/send-scheduled)
-          
-          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
-          BODY=$(echo "$RESPONSE" | head -n-1)
-          
-          echo "HTTP Status: $HTTP_CODE"
-          echo "Response: $BODY"
-          
-          if [ "$HTTP_CODE" != "200" ]; then
-            echo "❌ Error: HTTP $HTTP_CODE"
-            exit 1
-          fi
+            https://vendoya-kvaagblzr-borinkens-projects.vercel.app/api/cron/send-scheduled
       
       - name: Mostrar resultado
         run: echo "✅ Mensajes procesados"
