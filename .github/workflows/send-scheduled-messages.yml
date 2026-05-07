@@ -11,9 +11,20 @@ jobs:
     steps:
       - name: Ejecutar cron de mensajes
         run: |
-          curl -X GET \
+          RESPONSE=$(curl -s -w "\n%{http_code}" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            https://vendoya-kvaagblzr-borinkens-projects.vercel.app/api/cron/send-scheduled
+            https://vendoya-kvaagblzr-borinkens-projects.vercel.app/api/cron/send-scheduled)
+          
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | head -n-1)
+          
+          echo "HTTP Status: $HTTP_CODE"
+          echo "Response: $BODY"
+          
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "❌ Error: HTTP $HTTP_CODE"
+            exit 1
+          fi
       
       - name: Mostrar resultado
         run: echo "✅ Mensajes procesados"
