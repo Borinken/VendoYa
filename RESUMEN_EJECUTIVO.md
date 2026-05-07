@@ -27,35 +27,31 @@
 
 ## 🔧 Cómo Usar el Sistema
 
-### Opción 1: Ejecutar Cron Manualmente (Recomendado por ahora)
+### ✅ Automatización Activada (GitHub Actions)
+
+El sistema está configurado para ejecutarse automáticamente cada 15 minutos a través de GitHub Actions.
+
+**Estado:** ✅ Funcionando correctamente
+
+**Monitorear ejecuciones:**
+https://github.com/Borinken/VendoYa/actions/workflows/send-scheduled-messages.yml
+
+### Opción Manual (Backup)
+Si necesitas ejecutar el cron manualmente:
 ```bash
 cd /Users/LeslyHector/vendoya-crm
 ./ejecutar-cron.sh
 ```
 
-Este script ejecuta el procesamiento de mensajes programados. Ejecutarlo cada 15 minutos hasta que GitHub Actions se resuelva.
-
-### Opción 2: Usar un Servicio de Cron Externo
-Configurar en **cron-job.org** o similar:
-- **URL**: `https://vendoya-kvaagblzr-borinkens-projects.vercel.app/api/cron/send-scheduled`
-- **Método**: GET
-- **Header**: `Authorization: Bearer 0bda0d1c040c9b6e8d982fca93db997fb1ab1c17d47b11f25cccfe3d8e6feb17`
-- **Frecuencia**: Cada 15 minutos
-
 ---
 
-## ⚠️ Issue Conocido: GitHub Actions
+## ✅ Problema Resuelto: GitHub Actions
 
-El workflow de GitHub Actions está configurado pero falla al ejecutarse (sin logs visibles). 
+**El workflow ahora funciona perfectamente** después de hacer el repositorio público.
 
-**Posible causa**: Permisos del repositorio o configuración de GitHub Actions.
+**Causa del problema:** Los repositorios privados tienen límites estrictos en GitHub Actions con cuentas gratuitas.
 
-**Solución temporal**: Usar el script `ejecutar-cron.sh` o un servicio de cron externo.
-
-**Para revisar**:
-1. Ve a: https://github.com/Borinken/VendoYa/settings/actions
-2. Verifica que "Allow all actions and reusable workflows" esté activado
-3. Revisa https://github.com/Borinken/VendoYa/actions para ver logs
+**Solución aplicada:** Repositorio cambiado a público para acceso ilimitado a GitHub Actions.
 
 ---
 
@@ -115,6 +111,8 @@ SELECT * FROM get_funnel_stats(30);
 
 ✅ Formulario → ✅ Base de datos → ✅ Valoración IA → ✅ Resultados → ✅ Mensajes programados
 
-Solo falta resolver el workflow de GitHub Actions (workaround: ejecutar `./ejecutar-cron.sh` manualmente cada 15 min).
+Solo falta resolve100% completo y funcional.**
 
-**¡Todo listo para empezar a captar leads urgentes!** 🎉
+✅ Formulario → ✅ Base de datos → ✅ Valoración IA → ✅ Resultados → ✅ Mensajes programados → ✅ Automatización activa
+
+**El cron job se ejecuta automáticamente cada 15 minutos vía GitHub Actions.**
