@@ -13,7 +13,8 @@ export async function POST(request: Request) {
     // 4. Supabase Storage
 
     // Por ahora, simulamos URLs
-    for (const [key, value] of formData.entries()) {
+    const entries = Array.from(formData.entries());
+    for (const [key, value] of entries) {
       if (key.startsWith('photo-') && value instanceof File) {
         // En producción, subir a storage real
         // Ejemplo con Vercel Blob:

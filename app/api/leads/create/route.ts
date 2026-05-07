@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 // Inicialización segura de Supabase
 function getSupabaseClient() {
@@ -284,7 +284,8 @@ function determinePriority(situation: string): string {
 
 // Programar mensajes de seguimiento
 async function scheduleFollowUpMessages(
-  supabase: ReturnType<typeof createClient>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: SupabaseClient<any>,
   leadId: string,
   phone: string,
   name: string
