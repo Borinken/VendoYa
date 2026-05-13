@@ -6,6 +6,7 @@ import { Home, Building2, Users, Settings, Menu, X, BarChart3, Bell, FolderOpen,
 import { cn } from '@/lib/utils'
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
+import type { User } from '@supabase/supabase-js'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: Home },
@@ -23,7 +24,7 @@ export default function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
 
   useEffect(() => {
     const getUser = async () => {

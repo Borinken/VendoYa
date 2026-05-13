@@ -38,7 +38,7 @@ export default function TermsPage() {
             <section className="mb-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">1. Aceptación de los términos</h2>
               <p className="text-gray-700">
-                Al acceder y usar Vendoya ("el Servicio"), aceptas estar sujeto a estos Términos y Condiciones. 
+                Al acceder y usar Vendoya (&quot;el Servicio&quot;), aceptas estar sujeto a estos Términos y Condiciones. 
                 Si no estás de acuerdo con alguna parte de estos términos, no debes usar nuestro servicio.
               </p>
             </section>
