@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Canvas, useFrame, useLoader } from '@react-three/fiber'
+import { Canvas, useFrame } from '@react-three/fiber'
 import { OrbitControls, Environment } from '@react-three/drei'
 import * as THREE from 'three'
 import { Loader2 } from 'lucide-react'
@@ -22,7 +22,7 @@ function SplatMesh({ url }: { url: string }) {
     setLoading(false)
   }, [url])
 
-  useFrame((state) => {
+  useFrame(() => {
     if (meshRef.current) {
       // Animación suave si es necesario
       meshRef.current.rotation.y += 0.001
@@ -46,7 +46,7 @@ export default function GaussianSplatViewer({
   className = '' 
 }: GaussianSplatViewerProps) {
   const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [error] = useState<string | null>(null)
 
   return (
     <div className={`relative bg-gray-900 rounded-xl overflow-hidden ${className}`}>

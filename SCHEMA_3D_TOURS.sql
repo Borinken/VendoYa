@@ -13,6 +13,8 @@ CREATE TABLE IF NOT EXISTS property_3d_tours (
   processing_started_at TIMESTAMPTZ,
   processing_completed_at TIMESTAMPTZ,
   processing_error TEXT,
+  error_message TEXT, -- Mensaje de error detallado
+  polycam_capture_id TEXT, -- ID del capture en Polycam para tracking
   
   -- Estadísticas del tour
   file_size_mb DECIMAL(10,2),

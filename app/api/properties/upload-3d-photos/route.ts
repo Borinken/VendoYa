@@ -36,7 +36,7 @@ export async function POST(request: Request) {
     const fileName = `${propertyId}/photos/${Date.now()}-${index}.${fileExt}`;
 
     // Subir archivo a Supabase Storage
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
       .from('property-3d-photos')
       .upload(fileName, file, {
         contentType: file.type,

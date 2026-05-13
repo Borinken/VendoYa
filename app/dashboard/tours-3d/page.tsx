@@ -1,10 +1,18 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import dynamicImport from 'next/dynamic'
 import { supabase } from '@/lib/supabase'
-import { Plus, Eye, Trash2, Image, Loader2, AlertCircle, Box, Download } from 'lucide-react'
-import GaussianSplatViewer from '@/components/GaussianSplatViewer'
+import { Plus, Eye, Trash2, Image, Loader2, AlertCircle, Box } from 'lucide-react'
 import PhotoUploader3D from '@/components/PhotoUploader3D'
+
+// Importar GaussianSplatViewer solo en el cliente para evitar errores de SSR con Three.js
+const GaussianSplatViewer = dynamicImport(() => import('@/components/GaussianSplatViewer'), {
+  ssr: false,
+  loading: () => <div className="flex items-center justify-center h-full"><Loader2 className="w-8 h-8 animate-spin text-blue-600" /></div>
+})
+
+export const dynamic = 'force-dynamic'
 
 interface Property {
   id: string
@@ -72,7 +80,7 @@ export default function Tours3DPage() {
     }
   }
 
-  const handleUploadComplete = (splatUrl: string) => {
+  const handleUploadComplete = () => {
     setShowUploader(false)
     setSelectedProperty('')
     loadData()
