@@ -1,10 +1,11 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { Home, Building2, Users, Settings, Menu, X, BarChart3, Bell, FolderOpen, Mail, TrendingUp, Box } from 'lucide-react'
+import { usePathname, useRouter } from 'next/navigation'
+import { Home, Building2, Users, Settings, Menu, X, BarChart3, Bell, FolderOpen, Mail, TrendingUp, Box, LogOut } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { supabase } from '@/lib/supabase'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: Home },
@@ -20,7 +21,23 @@ const navigation = [
 
 export default function Sidebar() {
   const pathname = usePathname()
+  const router = useRouter()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [user, setUser] = useState<any>(null)
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      setUser(user)
+    }
+    getUser()
+  }, [])
+
+  const handleLogout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST' })
+    router.push('/login')
+    router.refresh()
+  }
 
   return (
     <>
@@ -97,15 +114,26 @@ export default function Sidebar() {
 
           {/* User info */}
           <div className="border-t border-gray-200 p-4 bg-gray-50">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 mb-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-emerald-500">
-                <span className="text-base font-bold text-white">AD</span>
+                <span className="text-base font-bold text-white">
+                  {user?.email?.substring(0, 2).toUpperCase() || 'AD'}
+                </span>
               </div>
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-gray-900">Admin</p>
-                <p className="text-xs text-gray-500">admin@vendoya.es</p>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-gray-900 truncate">
+                  {user?.user_metadata?.first_name || 'Usuario'}
+                </p>
+                <p className="text-xs text-gray-500 truncate">{user?.email || 'admin@vendoya.es'}</p>
               </div>
             </div>
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-white hover:bg-gray-100 rounded-lg transition-colors text-sm border border-gray-200 shadow-sm text-gray-700"
+            >
+              <LogOut className="w-4 h-4" />
+              Cerrar Sesión
+            </button>
           </div>
         </div>
       </aside>
