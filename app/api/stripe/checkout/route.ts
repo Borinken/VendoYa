@@ -55,10 +55,11 @@ export async function POST(req: NextRequest) {
     })
 
     return NextResponse.json({ sessionId: session.id, url: session.url })
-  } catch (error: any) {
+  } catch (error) {
     console.error('Checkout error:', error)
+    const err = error as Error
     return NextResponse.json(
-      { error: error.message || 'Error al crear sesión de pago' },
+      { error: err.message || 'Error al crear sesión de pago' },
       { status: 500 }
     )
   }

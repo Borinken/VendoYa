@@ -34,8 +34,9 @@ export default function LoginPage() {
         router.push(redirectTo)
         router.refresh()
       }
-    } catch (err: any) {
-      setError(err.message || 'Error al iniciar sesión')
+    } catch (err) {
+      const error = err as Error
+      setError(error.message || 'Error al iniciar sesión')
     } finally {
       setLoading(false)
     }

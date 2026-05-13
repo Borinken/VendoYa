@@ -25,7 +25,7 @@ export async function POST(request: Request) {
     
     // Verificar firma del webhook (opcional pero recomendado)
     if (webhookSecret) {
-      const signature = request.headers.get('polycam-signature');
+      // const signature = request.headers.get('polycam-signature');
       // TODO: Verificar firma si Polycam la provee
     }
 
@@ -59,7 +59,13 @@ export async function POST(request: Request) {
   }
 }
 
-async function handleCaptureCompleted(data: any) {
+async function handleCaptureCompleted(data: {
+  capture_id: string;
+  splat_url: string;
+  preview_url?: string;
+  file_size_mb?: number;
+  quality_score?: number;
+}) {
   const { capture_id, splat_url, preview_url, file_size_mb, quality_score } = data;
 
   console.log(`✅ Capture completado en Polycam: ${capture_id}`);
@@ -104,7 +110,10 @@ async function handleCaptureCompleted(data: any) {
   // - WhatsApp
 }
 
-async function handleCaptureFailed(data: any) {
+async function handleCaptureFailed(data: {
+  capture_id: string;
+  error_message: string;
+}) {
   const { capture_id, error_message } = data;
 
   console.log(`❌ Capture falló en Polycam: ${capture_id}`);

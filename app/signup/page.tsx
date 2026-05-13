@@ -98,9 +98,10 @@ export default function SignupPage() {
           router.refresh()
         }, 2000)
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error('Signup error:', err)
-      setError(err.message || 'Error al crear la cuenta')
+      const error = err as Error
+      setError(error.message || 'Error al crear la cuenta')
     } finally {
       setLoading(false)
     }

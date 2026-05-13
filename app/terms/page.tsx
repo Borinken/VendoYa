@@ -130,7 +130,7 @@ export default function TermsPage() {
             <section className="mb-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">8. Limitación de responsabilidad</h2>
               <p className="text-gray-700 mb-4">
-                El servicio se proporciona "tal cual". Hasta el máximo permitido por la ley:
+                El servicio se proporciona &quot;tal cual&quot;. Hasta el máximo permitido por la ley:
               </p>
               <ul className="list-disc pl-6 space-y-2 text-gray-700">
                 <li>No garantizamos que el servicio sea libre de errores</li>
