@@ -16,6 +16,8 @@ export async function middleware(req: NextRequest) {
     '/login',
     '/signup',
     '/vende-rapido',
+    '/inmobiliaria-erik',
+    '/leads',
     '/pricing',
     '/privacy',
     '/terms',

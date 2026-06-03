@@ -1,0 +1,438 @@
+'use client';
+
+import { useState, FormEvent } from 'react';
+import Link from 'next/link';
+import {
+  Home,
+  Phone,
+  MapPin,
+  Building2,
+  Hammer,
+  CheckCircle2,
+  ShieldCheck,
+  Clock,
+  Sparkles,
+  Loader2,
+} from 'lucide-react';
+
+const TIPOS_VIVIENDA = [
+  { value: 'casa_pueblo', label: 'Casa de Pueblo' },
+  { value: 'piso', label: 'Piso' },
+  { value: 'chalet', label: 'Chalet' },
+  { value: 'finca', label: 'Finca / Cortijo' },
+  { value: 'otra', label: 'Otra' },
+];
+
+const REFORMAS = [
+  { value: 'si_bastante', label: 'Sí, bastante' },
+  { value: 'un_poco', label: 'Un poco' },
+  { value: 'no_mucho', label: 'No mucho' },
+  { value: 'esta_bien', label: 'Está bien' },
+];
+
+export default function InmobiliariaErikLanding() {
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [form, setForm] = useState({
+    nombre: '',
+    telefono: '',
+    ubicacion: '',
+    tipo_vivienda: '',
+    necesita_reforma: '',
+    comentarios: '',
+  });
+
+  const update = (k: keyof typeof form, v: string) =>
+    setForm((f) => ({ ...f, [k]: v }));
+
+  const onSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    if (
+      !form.nombre.trim() ||
+      !form.telefono.trim() ||
+      !form.ubicacion.trim() ||
+      !form.tipo_vivienda ||
+      !form.necesita_reforma
+    ) {
+      setError('Por favor completa todos los campos obligatorios.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const params =
+        typeof window !== 'undefined'
+          ? new URLSearchParams(window.location.search)
+          : null;
+
+      const res = await fetch('/api/inmobiliaria-erik-leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...form,
+          source: 'inmobiliaria-erik-landing',
+          utm_source: params?.get('utm_source') || null,
+          utm_medium: params?.get('utm_medium') || null,
+          utm_campaign: params?.get('utm_campaign') || null,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error al enviar');
+
+      setSuccess(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error desconocido');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (success) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50 flex items-center justify-center px-4">
+        <div className="max-w-lg w-full bg-white rounded-3xl shadow-xl p-10 text-center border border-emerald-100">
+          <div className="w-20 h-20 bg-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+            <CheckCircle2 className="w-12 h-12 text-white" />
+          </div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-3">
+            ¡Solicitud recibida!
+          </h1>
+          <p className="text-gray-600 mb-6 leading-relaxed">
+            Gracias <span className="font-semibold">{form.nombre}</span>. Nuestro
+            equipo de <strong>Inmobiliaria Erik</strong> se pondrá en contacto
+            contigo en menos de <strong>24 horas</strong> a través del teléfono
+            que has indicado.
+          </p>
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 transition font-semibold"
+          >
+            Volver al inicio
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50">
+      {/* Header */}
+      <header className="bg-white/80 backdrop-blur sticky top-0 z-30 border-b border-gray-100">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center shadow-md">
+              <Home className="w-6 h-6 text-white" />
+            </div>
+            <div className="leading-tight">
+              <p className="text-xs text-emerald-600 font-medium">
+                Inmobiliaria Erik
+              </p>
+              <p className="font-bold text-gray-900">Antequera y comarca</p>
+            </div>
+          </div>
+          <Link
+            href="/"
+            className="text-sm text-gray-600 hover:text-emerald-600 hidden sm:block"
+          >
+            vendoya.es
+          </Link>
+        </div>
+      </header>
+
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10 lg:py-16 grid lg:grid-cols-2 gap-10 lg:gap-16 items-start">
+        {/* Hero / info */}
+        <div>
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-100 border border-emerald-200 rounded-full mb-6">
+            <Sparkles className="w-4 h-4 text-emerald-700" />
+            <span className="text-sm font-semibold text-emerald-800">
+              Valoración 100% gratuita y sin compromiso
+            </span>
+          </div>
+
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight mb-6">
+            Solicita tu{' '}
+            <span className="text-emerald-600">Valoración Gratuita</span>
+            <br />y Oferta de Compra
+          </h1>
+
+          <p className="text-lg text-gray-700 leading-relaxed mb-8">
+            En <strong>Inmobiliaria Erik</strong> somos especialistas en dar
+            salida a propiedades complejas en{' '}
+            <strong>Antequera y comarca</strong>. Ya sea una herencia, una casa
+            a reformar o un inmueble que no logras vender, nosotros te ofrecemos
+            una solución clara y sin complicaciones.
+          </p>
+
+          <p className="text-gray-600 mb-10">
+            Completa los datos y nuestro equipo de expertos se pondrá en
+            contacto contigo en menos de{' '}
+            <strong className="text-emerald-700">24 horas</strong> para analizar
+            tu caso sin compromiso.
+          </p>
+
+          <div className="space-y-4">
+            <Feature
+              icon={<Clock className="w-5 h-5" />}
+              title="Respuesta en menos de 24h"
+              text="Te contactamos rápido para no hacerte perder tiempo."
+            />
+            <Feature
+              icon={<ShieldCheck className="w-5 h-5" />}
+              title="Sin compromiso"
+              text="Estudiamos tu caso de forma totalmente gratuita."
+            />
+            <Feature
+              icon={<Building2 className="w-5 h-5" />}
+              title="Especialistas en casos complejos"
+              text="Herencias, reformas, embargos, propiedades difíciles."
+            />
+          </div>
+        </div>
+
+        {/* Form */}
+        <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-6 sm:p-8 lg:p-10">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            Cuéntanos sobre tu propiedad
+          </h2>
+          <p className="text-sm text-gray-500 mb-6">
+            Los campos marcados con <span className="text-red-500">*</span> son
+            obligatorios.
+          </p>
+
+          <form onSubmit={onSubmit} className="space-y-5">
+            <Field
+              label="Nombre y apellido"
+              required
+              icon={<User />}
+            >
+              <input
+                type="text"
+                value={form.nombre}
+                onChange={(e) => update('nombre', e.target.value)}
+                placeholder="Ej: María García"
+                className="form-input"
+                maxLength={200}
+              />
+            </Field>
+
+            <Field
+              label="Teléfono / WhatsApp"
+              required
+              icon={<Phone className="w-4 h-4" />}
+            >
+              <input
+                type="tel"
+                value={form.telefono}
+                onChange={(e) => update('telefono', e.target.value)}
+                placeholder="Ej: 600 123 456"
+                className="form-input"
+                maxLength={50}
+              />
+            </Field>
+
+            <Field
+              label="¿Dónde está ubicada la propiedad?"
+              required
+              icon={<MapPin className="w-4 h-4" />}
+            >
+              <input
+                type="text"
+                value={form.ubicacion}
+                onChange={(e) => update('ubicacion', e.target.value)}
+                placeholder="Ej: Antequera, Bobadilla, Mollina..."
+                className="form-input"
+                maxLength={500}
+              />
+            </Field>
+
+            <Field
+              label="¿Qué tipo de vivienda es?"
+              required
+              icon={<Building2 className="w-4 h-4" />}
+            >
+              <div className="grid grid-cols-2 gap-2">
+                {TIPOS_VIVIENDA.map((opt) => (
+                  <Pill
+                    key={opt.value}
+                    selected={form.tipo_vivienda === opt.value}
+                    onClick={() => update('tipo_vivienda', opt.value)}
+                    label={opt.label}
+                  />
+                ))}
+              </div>
+            </Field>
+
+            <Field
+              label="¿Necesita reforma?"
+              required
+              icon={<Hammer className="w-4 h-4" />}
+            >
+              <div className="grid grid-cols-2 gap-2">
+                {REFORMAS.map((opt) => (
+                  <Pill
+                    key={opt.value}
+                    selected={form.necesita_reforma === opt.value}
+                    onClick={() => update('necesita_reforma', opt.value)}
+                    label={opt.label}
+                  />
+                ))}
+              </div>
+            </Field>
+
+            <Field label="Cuéntanos un poco sobre la propiedad (opcional)">
+              <textarea
+                value={form.comentarios}
+                onChange={(e) => update('comentarios', e.target.value)}
+                placeholder="Metros cuadrados, número de habitaciones, situación actual, etc."
+                rows={4}
+                className="form-input resize-none"
+                maxLength={2000}
+              />
+            </Field>
+
+            {error && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                {error}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-2 py-4 bg-emerald-500 text-white rounded-xl font-semibold text-lg hover:bg-emerald-600 disabled:opacity-60 disabled:cursor-not-allowed transition shadow-lg shadow-emerald-500/20"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Enviando...
+                </>
+              ) : (
+                <>Solicitar mi valoración gratuita</>
+              )}
+            </button>
+
+            <p className="text-xs text-gray-500 text-center">
+              Al enviar aceptas que Inmobiliaria Erik te contacte para tratar tu
+              solicitud.
+            </p>
+          </form>
+        </div>
+      </div>
+
+      <footer className="border-t border-gray-100 mt-10 py-8 text-center text-sm text-gray-500">
+        © {new Date().getFullYear()} Inmobiliaria Erik · Antequera y comarca
+      </footer>
+
+      <style jsx global>{`
+        .form-input {
+          width: 100%;
+          padding: 0.75rem 1rem;
+          border: 1px solid #e5e7eb;
+          border-radius: 0.75rem;
+          font-size: 0.95rem;
+          color: #111827;
+          background: #f9fafb;
+          transition: all 0.15s;
+        }
+        .form-input:focus {
+          outline: none;
+          border-color: #10b981;
+          background: white;
+          box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+        }
+      `}</style>
+    </div>
+  );
+}
+
+function Feature({
+  icon,
+  title,
+  text,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  text: string;
+}) {
+  return (
+    <div className="flex items-start gap-3">
+      <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center flex-shrink-0">
+        {icon}
+      </div>
+      <div>
+        <p className="font-semibold text-gray-900">{title}</p>
+        <p className="text-sm text-gray-600">{text}</p>
+      </div>
+    </div>
+  );
+}
+
+function Field({
+  label,
+  required,
+  icon,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  icon?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <label className="flex items-center gap-2 text-sm font-semibold text-gray-800 mb-2">
+        {icon && <span className="text-emerald-600">{icon}</span>}
+        {label}
+        {required && <span className="text-red-500">*</span>}
+      </label>
+      {children}
+    </div>
+  );
+}
+
+function Pill({
+  selected,
+  onClick,
+  label,
+}: {
+  selected: boolean;
+  onClick: () => void;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`px-4 py-2.5 rounded-xl text-sm font-medium border transition ${
+        selected
+          ? 'bg-emerald-500 text-white border-emerald-500 shadow-md shadow-emerald-500/20'
+          : 'bg-gray-50 text-gray-700 border-gray-200 hover:border-emerald-300 hover:bg-white'
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
+
+// Pequeño icono User inline para evitar import extra
+function User() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
+    </svg>
+  );
+}
