@@ -1,13 +1,20 @@
 import Stripe from 'stripe'
 
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('STRIPE_SECRET_KEY is not defined')
-}
-
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  apiVersion: '2024-11-20.acacia' as any,
-  typescript: true,
+// Lazy-initialized: solo se crea cuando se usa, no en build time.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const stripe: Stripe = new Proxy({} as any, {
+  get(_target, prop) {
+    if (!process.env.STRIPE_SECRET_KEY) {
+      throw new Error('STRIPE_SECRET_KEY is not defined')
+    }
+    const instance = new Stripe(process.env.STRIPE_SECRET_KEY, {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      apiVersion: '2024-11-20.acacia' as any,
+      typescript: true,
+    })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (instance as any)[prop]
+  },
 })
 
 export const PLANS = {
