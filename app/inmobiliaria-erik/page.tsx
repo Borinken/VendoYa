@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
-import Link from 'next/link';
+import { useState, FormEvent, useEffect } from 'react';
 import {
   Home,
   Phone,
@@ -92,54 +91,23 @@ export default function InmobiliariaErikLanding() {
   };
 
   if (success) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50 flex items-center justify-center px-4">
-        <div className="max-w-lg w-full bg-white rounded-3xl shadow-xl p-10 text-center border border-emerald-100">
-          <div className="w-20 h-20 bg-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
-            <CheckCircle2 className="w-12 h-12 text-white" />
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-3">
-            ¡Solicitud recibida!
-          </h1>
-          <p className="text-gray-600 mb-6 leading-relaxed">
-            Gracias <span className="font-semibold">{form.nombre}</span>. Nuestro
-            equipo de <strong>Inmobiliaria Erik</strong> se pondrá en contacto
-            contigo en menos de <strong>24 horas</strong> a través del teléfono
-            que has indicado.
-          </p>
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 transition font-semibold"
-          >
-            Volver al inicio
-          </Link>
-        </div>
-      </div>
-    );
+    return <SuccessScreen nombre={form.nombre} />;
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50">
       {/* Header */}
       <header className="bg-white/80 backdrop-blur sticky top-0 z-30 border-b border-gray-100">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center shadow-md">
-              <Home className="w-6 h-6 text-white" />
-            </div>
-            <div className="leading-tight">
-              <p className="text-xs text-emerald-600 font-medium">
-                Inmobiliaria Erik
-              </p>
-              <p className="font-bold text-gray-900">Antequera y comarca</p>
-            </div>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center gap-3">
+          <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center shadow-md">
+            <Home className="w-6 h-6 text-white" />
           </div>
-          <Link
-            href="/"
-            className="text-sm text-gray-600 hover:text-emerald-600 hidden sm:block"
-          >
-            vendoya.es
-          </Link>
+          <div className="leading-tight">
+            <p className="text-xs text-emerald-600 font-medium">
+              Inmobiliaria Erik
+            </p>
+            <p className="font-bold text-gray-900">Antequera y comarca</p>
+          </div>
         </div>
       </header>
 
@@ -415,6 +383,74 @@ function Pill({
     >
       {label}
     </button>
+  );
+}
+
+function SuccessScreen({ nombre }: { nombre: string }) {
+  const [closing, setClosing] = useState(false);
+
+  // Intenta cerrar la pestaña automáticamente. Si el navegador no lo permite
+  // (la pestaña no fue abierta por script), intenta volver atrás (Instagram /
+  // Facebook / WhatsApp). Solo después de un par de segundos, para que el
+  // usuario alcance a ver el mensaje de confirmación.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setClosing(true);
+      try {
+        window.close();
+      } catch {
+        /* noop */
+      }
+      // Si seguimos aquí (pestaña no se cerró), intenta volver atrás
+      setTimeout(() => {
+        if (typeof window !== 'undefined' && window.history.length > 1) {
+          window.history.back();
+        }
+      }, 400);
+    }, 2500);
+    return () => clearTimeout(t);
+  }, []);
+
+  const handleClose = () => {
+    try {
+      window.close();
+    } catch {
+      /* noop */
+    }
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      window.history.back();
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50 flex items-center justify-center px-4">
+      <div className="max-w-lg w-full bg-white rounded-3xl shadow-xl p-10 text-center border border-emerald-100">
+        <div className="w-20 h-20 bg-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+          <CheckCircle2 className="w-12 h-12 text-white" />
+        </div>
+        <h1 className="text-3xl font-bold text-gray-900 mb-3">
+          ¡Solicitud recibida!
+        </h1>
+        <p className="text-gray-600 mb-6 leading-relaxed">
+          Gracias <span className="font-semibold">{nombre}</span>. Nuestro
+          equipo de <strong>Inmobiliaria Erik</strong> se pondrá en contacto
+          contigo en menos de <strong>24 horas</strong> a través del teléfono
+          que has indicado.
+        </p>
+        <button
+          type="button"
+          onClick={handleClose}
+          className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 transition font-semibold"
+        >
+          Cerrar
+        </button>
+        {closing && (
+          <p className="text-xs text-gray-400 mt-4">
+            Puedes cerrar esta ventana.
+          </p>
+        )}
+      </div>
+    </div>
   );
 }
 
