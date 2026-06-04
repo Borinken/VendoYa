@@ -131,3 +131,80 @@ export async function GET(request: Request) {
     );
   }
 }
+
+// =========================
+// PATCH: actualizar lead (admin)
+// Marcar como atendido / cambiar estado / asignar persona
+// =========================
+const VALID_ESTADOS = [
+  'nuevo',
+  'contactado',
+  'cualificado',
+  'descartado',
+  'cerrado',
+];
+
+export async function PATCH(request: Request) {
+  if (!checkAdmin(request)) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+  }
+
+  try {
+    const body = await request.json();
+    const id = String(body.id || '').trim();
+    if (!id) {
+      return NextResponse.json({ error: 'Falta id' }, { status: 400 });
+    }
+
+    const update: Record<string, unknown> = {};
+
+    if (body.estado !== undefined) {
+      if (!VALID_ESTADOS.includes(body.estado)) {
+        return NextResponse.json(
+          { error: 'Estado inválido' },
+          { status: 400 }
+        );
+      }
+      update.estado = body.estado;
+    }
+
+    if (body.atendido_por !== undefined) {
+      const who = String(body.atendido_por || '').trim().slice(0, 100);
+      update.atendido_por = who || null;
+      // Si marcamos atendido, sello la fecha
+      update.atendido_at = who ? new Date().toISOString() : null;
+    }
+
+    if (body.notas_internas !== undefined) {
+      update.notas_internas =
+        String(body.notas_internas || '').trim().slice(0, 5000) || null;
+    }
+
+    if (Object.keys(update).length === 0) {
+      return NextResponse.json(
+        { error: 'Sin cambios que aplicar' },
+        { status: 400 }
+      );
+    }
+
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from('inmobiliaria_erik_leads')
+      .update(update)
+      .eq('id', id)
+      .select('*')
+      .single();
+
+    if (error) {
+      console.error('PATCH lead error:', error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true, lead: data });
+  } catch (err) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : 'Error' },
+      { status: 500 }
+    );
+  }
+}

@@ -11,6 +11,9 @@ import {
   Calendar,
   Inbox,
   Loader2,
+  CheckCircle2,
+  Undo2,
+  UserCheck,
 } from 'lucide-react';
 
 interface Lead {
@@ -19,9 +22,11 @@ interface Lead {
   telefono: string;
   ubicacion: string;
   tipo_vivienda: string;
-  necesita_reforma: string;
+  necesita_reforma: string | null;
   comentarios: string | null;
   estado: string;
+  atendido_por: string | null;
+  atendido_at: string | null;
   source: string | null;
   utm_source: string | null;
   utm_campaign: string | null;
@@ -29,28 +34,17 @@ interface Lead {
 }
 
 const TIPO_LABEL: Record<string, string> = {
-  casa_pueblo: 'Casa de Pueblo',
+  casa_pueblo: 'Casa',
   piso: 'Piso',
   chalet: 'Chalet',
   finca: 'Finca / Cortijo',
-  otra: 'Otra',
-};
-
-const REFORMA_LABEL: Record<string, string> = {
-  si_bastante: 'Sí, bastante',
-  un_poco: 'Un poco',
-  no_mucho: 'No mucho',
-  esta_bien: 'Está bien',
-};
-
-const REFORMA_COLOR: Record<string, string> = {
-  si_bastante: 'bg-red-100 text-red-700',
-  un_poco: 'bg-amber-100 text-amber-700',
-  no_mucho: 'bg-blue-100 text-blue-700',
-  esta_bien: 'bg-emerald-100 text-emerald-700',
+  otra: 'Otro',
 };
 
 const STORAGE_KEY = 'leads_admin_pwd';
+const USER_KEY = 'leads_admin_user';
+
+type Tab = 'nuevos' | 'historial';
 
 export default function LeadsAdminPage() {
   const [password, setPassword] = useState('');
@@ -59,17 +53,26 @@ export default function LeadsAdminPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState<'todos' | 'casa_pueblo' | 'piso' | 'chalet' | 'finca' | 'otra'>('todos');
+  const [tab, setTab] = useState<Tab>('nuevos');
+  const [currentUser, setCurrentUser] = useState('');
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
-  // Cargar contraseña guardada
+  // Cargar contraseña + usuario
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const saved = localStorage.getItem(STORAGE_KEY);
+    const user = localStorage.getItem(USER_KEY);
+    if (user) setCurrentUser(user);
     if (saved) {
       setPassword(saved);
       void loadLeads(saved);
     }
   }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (currentUser) localStorage.setItem(USER_KEY, currentUser);
+  }, [currentUser]);
 
   async function loadLeads(pwd: string) {
     setLoading(true);
@@ -100,23 +103,86 @@ export default function LeadsAdminPage() {
     }
   }
 
+  async function marcarAtendido(lead: Lead) {
+    const who =
+      currentUser.trim() ||
+      window.prompt(
+        '¿Quién atiende este lead? (ej: Erik, María...)'
+      )?.trim() ||
+      '';
+    if (!who) return;
+    setCurrentUser(who);
+
+    setUpdatingId(lead.id);
+    try {
+      const res = await fetch('/api/inmobiliaria-erik-leads', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${password}`,
+        },
+        body: JSON.stringify({
+          id: lead.id,
+          estado: 'contactado',
+          atendido_por: who,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error');
+      setLeads((prev) => prev.map((l) => (l.id === lead.id ? data.lead : l)));
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Error al actualizar');
+    } finally {
+      setUpdatingId(null);
+    }
+  }
+
+  async function devolverANuevos(lead: Lead) {
+    setUpdatingId(lead.id);
+    try {
+      const res = await fetch('/api/inmobiliaria-erik-leads', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${password}`,
+        },
+        body: JSON.stringify({
+          id: lead.id,
+          estado: 'nuevo',
+          atendido_por: '',
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error');
+      setLeads((prev) => prev.map((l) => (l.id === lead.id ? data.lead : l)));
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Error al actualizar');
+    } finally {
+      setUpdatingId(null);
+    }
+  }
+
+  const nuevos = useMemo(
+    () => leads.filter((l) => l.estado === 'nuevo'),
+    [leads]
+  );
+  const historial = useMemo(
+    () => leads.filter((l) => l.estado !== 'nuevo'),
+    [leads]
+  );
+  const sourceList = tab === 'nuevos' ? nuevos : historial;
+
   const filtered = useMemo(() => {
-    let list = leads;
-    if (filter !== 'todos') {
-      list = list.filter((l) => l.tipo_vivienda === filter);
-    }
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      list = list.filter(
-        (l) =>
-          l.nombre.toLowerCase().includes(q) ||
-          l.telefono.toLowerCase().includes(q) ||
-          l.ubicacion.toLowerCase().includes(q) ||
-          (l.comentarios || '').toLowerCase().includes(q)
-      );
-    }
-    return list;
-  }, [leads, filter, search]);
+    if (!search.trim()) return sourceList;
+    const q = search.toLowerCase();
+    return sourceList.filter(
+      (l) =>
+        l.nombre.toLowerCase().includes(q) ||
+        l.telefono.toLowerCase().includes(q) ||
+        l.ubicacion.toLowerCase().includes(q) ||
+        (l.atendido_por || '').toLowerCase().includes(q)
+    );
+  }, [sourceList, search]);
 
   if (!authed) {
     return (
@@ -166,17 +232,27 @@ export default function LeadsAdminPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-4 flex-wrap">
           <div>
             <h1 className="text-xl font-bold text-gray-900">Leads recibidos</h1>
             <p className="text-xs text-gray-500">
-              {leads.length} totales · {filtered.length} filtrados
+              {nuevos.length} nuevos · {historial.length} en historial
             </p>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1.5 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg">
+              <UserCheck className="w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                value={currentUser}
+                onChange={(e) => setCurrentUser(e.target.value)}
+                placeholder="Tu nombre"
+                className="bg-transparent outline-none text-sm w-28"
+              />
+            </div>
+
             <button
               onClick={() => loadLeads(password)}
               disabled={loading}
@@ -194,7 +270,7 @@ export default function LeadsAdminPage() {
               className="inline-flex items-center gap-2 px-3 py-2 bg-emerald-500 text-white rounded-lg text-sm font-medium hover:bg-emerald-600"
             >
               <Download className="w-4 h-4" />
-              Descargar CSV / Excel
+              CSV / Excel
             </a>
             <button
               onClick={() => {
@@ -209,41 +285,40 @@ export default function LeadsAdminPage() {
             </button>
           </div>
         </div>
+
+        {/* Tabs */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex gap-1 border-t border-gray-100">
+          <TabBtn
+            active={tab === 'nuevos'}
+            onClick={() => setTab('nuevos')}
+            label="Nuevos"
+            count={nuevos.length}
+            color="emerald"
+          />
+          <TabBtn
+            active={tab === 'historial'}
+            onClick={() => setTab('historial')}
+            label="Historial"
+            count={historial.length}
+            color="gray"
+          />
+        </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
-        {/* Filtros */}
-        <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6 flex flex-col md:flex-row md:items-center gap-3">
+        <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar por nombre, teléfono, ubicación..."
+              placeholder="Buscar por nombre, teléfono, ubicación, atendido por..."
               className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 text-sm"
             />
           </div>
-          <div className="flex gap-1 overflow-x-auto">
-            {(['todos', 'piso', 'casa_pueblo', 'chalet', 'finca', 'otra'] as const).map(
-              (opt) => (
-                <button
-                  key={opt}
-                  onClick={() => setFilter(opt)}
-                  className={`px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition ${
-                    filter === opt
-                      ? 'bg-emerald-500 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  {opt === 'todos' ? 'Todos' : TIPO_LABEL[opt] || opt}
-                </button>
-              )
-            )}
-          </div>
         </div>
 
-        {/* Tabla */}
         {loading && leads.length === 0 ? (
           <div className="bg-white rounded-xl border border-gray-200 p-16 text-center">
             <Loader2 className="w-8 h-8 animate-spin text-emerald-500 mx-auto" />
@@ -252,9 +327,9 @@ export default function LeadsAdminPage() {
           <div className="bg-white rounded-xl border border-gray-200 p-16 text-center">
             <Inbox className="w-12 h-12 text-gray-300 mx-auto mb-3" />
             <p className="text-gray-500">
-              {leads.length === 0
-                ? 'Aún no hay leads recibidos.'
-                : 'No hay resultados con los filtros actuales.'}
+              {tab === 'nuevos'
+                ? '¡Todo al día! No hay leads nuevos pendientes.'
+                : 'Aún no hay leads en el historial.'}
             </p>
           </div>
         ) : (
@@ -266,15 +341,21 @@ export default function LeadsAdminPage() {
                     <th className="px-4 py-3">Fecha</th>
                     <th className="px-4 py-3">Nombre</th>
                     <th className="px-4 py-3">Teléfono</th>
-                    <th className="px-4 py-3">Ubicación</th>
+                    <th className="px-4 py-3">Zona</th>
                     <th className="px-4 py-3">Tipo</th>
-                    <th className="px-4 py-3">Reforma</th>
-                    <th className="px-4 py-3">Comentarios</th>
+                    {tab === 'historial' && (
+                      <th className="px-4 py-3">Atendido por</th>
+                    )}
+                    <th className="px-4 py-3 text-right">Acción</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {filtered.map((l) => {
                     const date = new Date(l.created_at);
+                    const atDate = l.atendido_at
+                      ? new Date(l.atendido_at)
+                      : null;
+                    const isUpdating = updatingId === l.id;
                     return (
                       <tr key={l.id} className="hover:bg-gray-50 align-top">
                         <td className="px-4 py-3 whitespace-nowrap text-gray-600">
@@ -320,20 +401,51 @@ export default function LeadsAdminPage() {
                             {TIPO_LABEL[l.tipo_vivienda] || l.tipo_vivienda}
                           </span>
                         </td>
-                        <td className="px-4 py-3">
-                          <span
-                            className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium ${
-                              REFORMA_COLOR[l.necesita_reforma] ||
-                              'bg-gray-100 text-gray-700'
-                            }`}
-                          >
-                            {REFORMA_LABEL[l.necesita_reforma] ||
-                              l.necesita_reforma}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-gray-600 max-w-xs">
-                          {l.comentarios || (
-                            <span className="text-gray-300">—</span>
+                        {tab === 'historial' && (
+                          <td className="px-4 py-3 text-gray-700">
+                            <div className="flex flex-col">
+                              <span className="font-medium">
+                                {l.atendido_por || '—'}
+                              </span>
+                              {atDate && (
+                                <span className="text-xs text-gray-400">
+                                  {atDate.toLocaleDateString('es-ES')}{' '}
+                                  {atDate.toLocaleTimeString('es-ES', {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  })}
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                        )}
+                        <td className="px-4 py-3 text-right">
+                          {tab === 'nuevos' ? (
+                            <button
+                              onClick={() => marcarAtendido(l)}
+                              disabled={isUpdating}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500 text-white text-xs font-medium rounded-lg hover:bg-emerald-600 disabled:opacity-60"
+                            >
+                              {isUpdating ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                              )}
+                              Marcar atendido
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => devolverANuevos(l)}
+                              disabled={isUpdating}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-50 disabled:opacity-60"
+                            >
+                              {isUpdating ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <Undo2 className="w-3.5 h-3.5" />
+                              )}
+                              Devolver
+                            </button>
                           )}
                         </td>
                       </tr>
@@ -346,5 +458,47 @@ export default function LeadsAdminPage() {
         )}
       </main>
     </div>
+  );
+}
+
+function TabBtn({
+  active,
+  onClick,
+  label,
+  count,
+  color,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+  count: number;
+  color: 'emerald' | 'gray';
+}) {
+  const activeBorder =
+    color === 'emerald' ? 'border-emerald-500' : 'border-gray-700';
+  const activeText =
+    color === 'emerald' ? 'text-emerald-600' : 'text-gray-900';
+  return (
+    <button
+      onClick={onClick}
+      className={`relative px-4 py-3 text-sm font-semibold transition ${
+        active
+          ? `${activeText} border-b-2 ${activeBorder} -mb-px`
+          : 'text-gray-500 hover:text-gray-700'
+      }`}
+    >
+      {label}
+      <span
+        className={`ml-2 inline-block px-2 py-0.5 rounded-full text-xs ${
+          active
+            ? color === 'emerald'
+              ? 'bg-emerald-100 text-emerald-700'
+              : 'bg-gray-200 text-gray-700'
+            : 'bg-gray-100 text-gray-500'
+        }`}
+      >
+        {count}
+      </span>
+    </button>
   );
 }
