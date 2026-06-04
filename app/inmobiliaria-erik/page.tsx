@@ -123,39 +123,6 @@ export default function InmobiliariaErikLanding() {
             <span className="text-[#E30613]">contactamos en menos de 24 h</span>{' '}
             con una oferta real.
           </h1>
-
-          <p className="text-lg text-gray-700 leading-relaxed mb-8">
-            En <strong>Inmobiliaria Erik</strong> somos especialistas en dar
-            salida a propiedades complejas en{' '}
-            <strong>Antequera y comarca</strong>. Ya sea una herencia, una casa
-            a reformar o un inmueble que no logras vender, nosotros te ofrecemos
-            una solución clara y sin complicaciones.
-          </p>
-
-          <p className="text-gray-600 mb-10">
-            Completa los datos y nuestro equipo de expertos se pondrá en
-            contacto contigo en menos de{' '}
-            <strong className="text-[#b8050f]">24 horas</strong> para analizar
-            tu caso sin compromiso.
-          </p>
-
-          <div className="space-y-4">
-            <Feature
-              icon={<Clock className="w-5 h-5" />}
-              title="Respuesta en menos de 24h"
-              text="Te contactamos rápido para no hacerte perder tiempo."
-            />
-            <Feature
-              icon={<ShieldCheck className="w-5 h-5" />}
-              title="Sin compromiso"
-              text="Estudiamos tu caso de forma totalmente gratuita."
-            />
-            <Feature
-              icon={<Building2 className="w-5 h-5" />}
-              title="Especialistas en casos complejos"
-              text="Herencias, reformas, embargos, propiedades difíciles."
-            />
-          </div>
         </div>
 
         {/* Form */}
