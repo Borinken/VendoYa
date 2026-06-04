@@ -6,7 +6,6 @@ import {
   Phone,
   MapPin,
   Building2,
-  Hammer,
   CheckCircle2,
   ShieldCheck,
   Clock,
@@ -14,19 +13,18 @@ import {
   Loader2,
 } from 'lucide-react';
 
-const TIPOS_VIVIENDA = [
-  { value: 'casa_pueblo', label: 'Casa de Pueblo' },
-  { value: 'piso', label: 'Piso' },
-  { value: 'chalet', label: 'Chalet' },
-  { value: 'finca', label: 'Finca / Cortijo' },
-  { value: 'otra', label: 'Otra' },
+const ZONAS = [
+  { value: 'Antequera', label: 'Antequera' },
+  { value: 'Bobadilla', label: 'Bobadilla' },
+  { value: 'Archidona', label: 'Archidona' },
+  { value: 'Otros', label: 'Otros' },
 ];
 
-const REFORMAS = [
-  { value: 'si_bastante', label: 'Sí, bastante' },
-  { value: 'un_poco', label: 'Un poco' },
-  { value: 'no_mucho', label: 'No mucho' },
-  { value: 'esta_bien', label: 'Está bien' },
+const TIPOS_VIVIENDA = [
+  { value: 'casa_pueblo', label: 'Casa' },
+  { value: 'piso', label: 'Piso' },
+  { value: 'chalet', label: 'Chalet' },
+  { value: 'otra', label: 'Otro' },
 ];
 
 export default function InmobiliariaErikLanding() {
@@ -38,8 +36,6 @@ export default function InmobiliariaErikLanding() {
     telefono: '',
     ubicacion: '',
     tipo_vivienda: '',
-    necesita_reforma: '',
-    comentarios: '',
   });
 
   const update = (k: keyof typeof form, v: string) =>
@@ -53,8 +49,7 @@ export default function InmobiliariaErikLanding() {
       !form.nombre.trim() ||
       !form.telefono.trim() ||
       !form.ubicacion.trim() ||
-      !form.tipo_vivienda ||
-      !form.necesita_reforma
+      !form.tipo_vivienda
     ) {
       setError('Por favor completa todos los campos obligatorios.');
       return;
@@ -72,6 +67,8 @@ export default function InmobiliariaErikLanding() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...form,
+          // Campo requerido en DB pero ya no se pregunta al usuario
+          necesita_reforma: 'esta_bien',
           source: 'inmobiliaria-erik-landing',
           utm_source: params?.get('utm_source') || null,
           utm_medium: params?.get('utm_medium') || null,
@@ -122,9 +119,9 @@ export default function InmobiliariaErikLanding() {
           </div>
 
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight mb-6">
-            Solicita tu{' '}
-            <span className="text-[#E30613]">Valoración Gratuita</span>
-            <br />y Oferta de Compra
+            Completa tus datos y te{' '}
+            <span className="text-[#E30613]">contactamos en menos de 24 h</span>{' '}
+            con una oferta real.
           </h1>
 
           <p className="text-lg text-gray-700 leading-relaxed mb-8">
@@ -207,14 +204,16 @@ export default function InmobiliariaErikLanding() {
               required
               icon={<MapPin className="w-4 h-4" />}
             >
-              <input
-                type="text"
-                value={form.ubicacion}
-                onChange={(e) => update('ubicacion', e.target.value)}
-                placeholder="Ej: Antequera, Bobadilla, Mollina..."
-                className="form-input"
-                maxLength={500}
-              />
+              <div className="grid grid-cols-2 gap-2">
+                {ZONAS.map((opt) => (
+                  <Pill
+                    key={opt.value}
+                    selected={form.ubicacion === opt.value}
+                    onClick={() => update('ubicacion', opt.value)}
+                    label={opt.label}
+                  />
+                ))}
+              </div>
             </Field>
 
             <Field
@@ -232,34 +231,6 @@ export default function InmobiliariaErikLanding() {
                   />
                 ))}
               </div>
-            </Field>
-
-            <Field
-              label="¿Necesita reforma?"
-              required
-              icon={<Hammer className="w-4 h-4" />}
-            >
-              <div className="grid grid-cols-2 gap-2">
-                {REFORMAS.map((opt) => (
-                  <Pill
-                    key={opt.value}
-                    selected={form.necesita_reforma === opt.value}
-                    onClick={() => update('necesita_reforma', opt.value)}
-                    label={opt.label}
-                  />
-                ))}
-              </div>
-            </Field>
-
-            <Field label="Cuéntanos un poco sobre la propiedad (opcional)">
-              <textarea
-                value={form.comentarios}
-                onChange={(e) => update('comentarios', e.target.value)}
-                placeholder="Metros cuadrados, número de habitaciones, situación actual, etc."
-                rows={4}
-                className="form-input resize-none"
-                maxLength={2000}
-              />
             </Field>
 
             {error && (
