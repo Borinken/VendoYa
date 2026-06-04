@@ -98,10 +98,7 @@ export default function InmobiliariaErikLanding() {
             <Home className="w-6 h-6 text-white" />
           </div>
           <div className="leading-tight">
-            <p className="text-xs text-[#E30613] font-medium">
-              Inmobiliaria Erik
-            </p>
-            <p className="font-bold text-gray-900">Antequera y comarca</p>
+            <p className="font-bold text-gray-900">Antequera y Comarca</p>
           </div>
         </div>
       </header>
@@ -220,15 +217,15 @@ export default function InmobiliariaErikLanding() {
             </button>
 
             <p className="text-xs text-gray-500 text-center">
-              Al enviar aceptas que Inmobiliaria Erik te contacte para tratar tu
-              solicitud.
+              Al enviar aceptas que Antequera y Comarca te contacte para tratar
+              tu solicitud.
             </p>
           </form>
         </div>
       </div>
 
       <footer className="border-t border-gray-100 mt-10 py-8 text-center text-sm text-gray-500">
-        © {new Date().getFullYear()} Inmobiliaria Erik · Antequera y comarca
+        © {new Date().getFullYear()} Antequera y Comarca
       </footer>
 
       <style jsx global>{`
