@@ -7,8 +7,6 @@ import {
   MapPin,
   Building2,
   CheckCircle2,
-  ShieldCheck,
-  Clock,
   Sparkles,
   Loader2,
 } from 'lucide-react';
@@ -251,28 +249,6 @@ export default function InmobiliariaErikLanding() {
           box-shadow: 0 0 0 3px rgba(227, 6, 19, 0.15);
         }
       `}</style>
-    </div>
-  );
-}
-
-function Feature({
-  icon,
-  title,
-  text,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  text: string;
-}) {
-  return (
-    <div className="flex items-start gap-3">
-      <div className="w-10 h-10 rounded-xl bg-red-50 text-[#b8050f] flex items-center justify-center flex-shrink-0">
-        {icon}
-      </div>
-      <div>
-        <p className="font-semibold text-gray-900">{title}</p>
-        <p className="text-sm text-gray-600">{text}</p>
-      </div>
     </div>
   );
 }
