@@ -95,15 +95,15 @@ export default function InmobiliariaErikLanding() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50">
+    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-stone-50">
       {/* Header */}
       <header className="bg-white/80 backdrop-blur sticky top-0 z-30 border-b border-gray-100">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center gap-3">
-          <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center shadow-md">
+          <div className="w-10 h-10 bg-[#E30613] rounded-xl flex items-center justify-center shadow-md">
             <Home className="w-6 h-6 text-white" />
           </div>
           <div className="leading-tight">
-            <p className="text-xs text-emerald-600 font-medium">
+            <p className="text-xs text-[#E30613] font-medium">
               Inmobiliaria Erik
             </p>
             <p className="font-bold text-gray-900">Antequera y comarca</p>
@@ -114,16 +114,16 @@ export default function InmobiliariaErikLanding() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10 lg:py-16 grid lg:grid-cols-2 gap-10 lg:gap-16 items-start">
         {/* Hero / info */}
         <div>
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-100 border border-emerald-200 rounded-full mb-6">
-            <Sparkles className="w-4 h-4 text-emerald-700" />
-            <span className="text-sm font-semibold text-emerald-800">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-red-50 border border-red-200 rounded-full mb-6">
+            <Sparkles className="w-4 h-4 text-[#b8050f]" />
+            <span className="text-sm font-semibold text-[#8a040b]">
               Valoración 100% gratuita y sin compromiso
             </span>
           </div>
 
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight mb-6">
             Solicita tu{' '}
-            <span className="text-emerald-600">Valoración Gratuita</span>
+            <span className="text-[#E30613]">Valoración Gratuita</span>
             <br />y Oferta de Compra
           </h1>
 
@@ -138,7 +138,7 @@ export default function InmobiliariaErikLanding() {
           <p className="text-gray-600 mb-10">
             Completa los datos y nuestro equipo de expertos se pondrá en
             contacto contigo en menos de{' '}
-            <strong className="text-emerald-700">24 horas</strong> para analizar
+            <strong className="text-[#b8050f]">24 horas</strong> para analizar
             tu caso sin compromiso.
           </p>
 
@@ -167,7 +167,7 @@ export default function InmobiliariaErikLanding() {
             Cuéntanos sobre tu propiedad
           </h2>
           <p className="text-sm text-gray-500 mb-6">
-            Los campos marcados con <span className="text-red-500">*</span> son
+            Los campos marcados con <span className="text-[#E30613]">*</span> son
             obligatorios.
           </p>
 
@@ -263,7 +263,7 @@ export default function InmobiliariaErikLanding() {
             </Field>
 
             {error && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
                 {error}
               </div>
             )}
@@ -271,7 +271,7 @@ export default function InmobiliariaErikLanding() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 py-4 bg-emerald-500 text-white rounded-xl font-semibold text-lg hover:bg-emerald-600 disabled:opacity-60 disabled:cursor-not-allowed transition shadow-lg shadow-emerald-500/20"
+              className="w-full flex items-center justify-center gap-2 py-4 bg-[#E30613] text-white rounded-xl font-semibold text-lg hover:bg-[#b8050f] disabled:opacity-60 disabled:cursor-not-allowed transition shadow-lg shadow-[#E30613]/20"
             >
               {loading ? (
                 <>
@@ -308,9 +308,9 @@ export default function InmobiliariaErikLanding() {
         }
         .form-input:focus {
           outline: none;
-          border-color: #10b981;
+          border-color: #E30613;
           background: white;
-          box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+          box-shadow: 0 0 0 3px rgba(227, 6, 19, 0.15);
         }
       `}</style>
     </div>
@@ -328,7 +328,7 @@ function Feature({
 }) {
   return (
     <div className="flex items-start gap-3">
-      <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center flex-shrink-0">
+      <div className="w-10 h-10 rounded-xl bg-red-50 text-[#b8050f] flex items-center justify-center flex-shrink-0">
         {icon}
       </div>
       <div>
@@ -353,9 +353,9 @@ function Field({
   return (
     <div>
       <label className="flex items-center gap-2 text-sm font-semibold text-gray-800 mb-2">
-        {icon && <span className="text-emerald-600">{icon}</span>}
+        {icon && <span className="text-[#E30613]">{icon}</span>}
         {label}
-        {required && <span className="text-red-500">*</span>}
+        {required && <span className="text-[#E30613]">*</span>}
       </label>
       {children}
     </div>
@@ -377,8 +377,8 @@ function Pill({
       onClick={onClick}
       className={`px-4 py-2.5 rounded-xl text-sm font-medium border transition ${
         selected
-          ? 'bg-emerald-500 text-white border-emerald-500 shadow-md shadow-emerald-500/20'
-          : 'bg-gray-50 text-gray-700 border-gray-200 hover:border-emerald-300 hover:bg-white'
+          ? 'bg-[#E30613] text-white border-[#E30613] shadow-md shadow-[#E30613]/20'
+          : 'bg-gray-50 text-gray-700 border-gray-200 hover:border-red-300 hover:bg-white'
       }`}
     >
       {label}
@@ -425,9 +425,9 @@ function SuccessScreen({ nombre }: { nombre: string }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50 flex items-center justify-center px-4">
-      <div className="max-w-lg w-full bg-white rounded-3xl shadow-xl p-10 text-center border border-emerald-100">
-        <div className="w-20 h-20 bg-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-stone-50 flex items-center justify-center px-4">
+      <div className="max-w-lg w-full bg-white rounded-3xl shadow-xl p-10 text-center border border-red-100">
+        <div className="w-20 h-20 bg-[#E30613] rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
           <CheckCircle2 className="w-12 h-12 text-white" />
         </div>
         <h1 className="text-3xl font-bold text-gray-900 mb-3">
@@ -444,12 +444,12 @@ function SuccessScreen({ nombre }: { nombre: string }) {
           <button
             type="button"
             onClick={handleClose}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 transition font-semibold"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-[#E30613] text-white rounded-xl hover:bg-[#b8050f] transition font-semibold"
           >
             Cerrar ventana
           </button>
         ) : (
-          <div className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-50 text-emerald-800 rounded-xl font-semibold border border-emerald-200">
+          <div className="inline-flex items-center gap-2 px-6 py-3 bg-red-50 text-[#8a040b] rounded-xl font-semibold border border-red-200">
             Ya puedes cerrar esta pestaña ✕
           </div>
         )}
