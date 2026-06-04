@@ -346,7 +346,7 @@ function SuccessScreen({ nombre }: { nombre: string }) {
         </h1>
         <p className="text-gray-600 mb-6 leading-relaxed">
           Gracias <span className="font-semibold">{nombre}</span>. Nuestro
-          equipo de <strong>Inmobiliaria Erik</strong> se pondrá en contacto
+          equipo de <strong>Antequera y Comarca</strong> se pondrá en contacto
           contigo en menos de <strong>24 horas</strong> a través del teléfono
           que has indicado.
         </p>
