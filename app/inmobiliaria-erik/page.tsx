@@ -387,19 +387,33 @@ function Pill({
 }
 
 function SuccessScreen({ nombre }: { nombre: string }) {
-  // Intenta cerrar la pestaña al cargar (solo funciona si la pestaña fue
-  // abierta por script — Instagram/Facebook in-app browser, popups, etc.).
-  // NO hacemos history.back() ni redirect: queremos que el usuario se quede
-  // en esta pantalla de "Gracias" hasta que cierre manualmente.
+  // Detecta si el navegador permitirá cerrar la pestaña con window.close().
+  // Solo es posible cuando la pestaña fue abierta por script (popup, webview
+  // de Instagram/Facebook/WhatsApp, target="_blank" desde un botón). Si el
+  // usuario abrió la URL manualmente, los navegadores BLOQUEAN window.close()
+  // por seguridad — no hay forma de saltar esa regla.
+  const [canClose, setCanClose] = useState(false);
+
   useEffect(() => {
-    const t = setTimeout(() => {
-      try {
-        window.close();
-      } catch {
-        /* noop */
-      }
-    }, 1500);
-    return () => clearTimeout(t);
+    const allowed =
+      typeof window !== 'undefined' &&
+      (window.opener != null ||
+        // Webview de apps móviles suele permitirlo
+        /Instagram|FBAN|FBAV|FB_IAB|Line|WhatsApp/i.test(
+          navigator.userAgent || ''
+        ));
+    setCanClose(allowed);
+
+    if (allowed) {
+      const t = setTimeout(() => {
+        try {
+          window.close();
+        } catch {
+          /* noop */
+        }
+      }, 1500);
+      return () => clearTimeout(t);
+    }
   }, []);
 
   const handleClose = () => {
@@ -425,16 +439,20 @@ function SuccessScreen({ nombre }: { nombre: string }) {
           contigo en menos de <strong>24 horas</strong> a través del teléfono
           que has indicado.
         </p>
-        <button
-          type="button"
-          onClick={handleClose}
-          className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 transition font-semibold"
-        >
-          Cerrar ventana
-        </button>
-        <p className="text-xs text-gray-400 mt-4">
-          Ya puedes cerrar esta pestaña.
-        </p>
+
+        {canClose ? (
+          <button
+            type="button"
+            onClick={handleClose}
+            className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 transition font-semibold"
+          >
+            Cerrar ventana
+          </button>
+        ) : (
+          <div className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-50 text-emerald-800 rounded-xl font-semibold border border-emerald-200">
+            Ya puedes cerrar esta pestaña ✕
+          </div>
+        )}
       </div>
     </div>
   );
