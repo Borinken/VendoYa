@@ -387,27 +387,18 @@ function Pill({
 }
 
 function SuccessScreen({ nombre }: { nombre: string }) {
-  const [closing, setClosing] = useState(false);
-
-  // Intenta cerrar la pestaña automáticamente. Si el navegador no lo permite
-  // (la pestaña no fue abierta por script), intenta volver atrás (Instagram /
-  // Facebook / WhatsApp). Solo después de un par de segundos, para que el
-  // usuario alcance a ver el mensaje de confirmación.
+  // Intenta cerrar la pestaña al cargar (solo funciona si la pestaña fue
+  // abierta por script — Instagram/Facebook in-app browser, popups, etc.).
+  // NO hacemos history.back() ni redirect: queremos que el usuario se quede
+  // en esta pantalla de "Gracias" hasta que cierre manualmente.
   useEffect(() => {
     const t = setTimeout(() => {
-      setClosing(true);
       try {
         window.close();
       } catch {
         /* noop */
       }
-      // Si seguimos aquí (pestaña no se cerró), intenta volver atrás
-      setTimeout(() => {
-        if (typeof window !== 'undefined' && window.history.length > 1) {
-          window.history.back();
-        }
-      }, 400);
-    }, 2500);
+    }, 1500);
     return () => clearTimeout(t);
   }, []);
 
@@ -416,9 +407,6 @@ function SuccessScreen({ nombre }: { nombre: string }) {
       window.close();
     } catch {
       /* noop */
-    }
-    if (typeof window !== 'undefined' && window.history.length > 1) {
-      window.history.back();
     }
   };
 
@@ -442,13 +430,11 @@ function SuccessScreen({ nombre }: { nombre: string }) {
           onClick={handleClose}
           className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 transition font-semibold"
         >
-          Cerrar
+          Cerrar ventana
         </button>
-        {closing && (
-          <p className="text-xs text-gray-400 mt-4">
-            Puedes cerrar esta ventana.
-          </p>
-        )}
+        <p className="text-xs text-gray-400 mt-4">
+          Ya puedes cerrar esta pestaña.
+        </p>
       </div>
     </div>
   );
