@@ -718,16 +718,18 @@ function StepDetails({
           </p>
           <div className="relative">
             <input
-              type="number"
+              type="text"
               inputMode="numeric"
+              pattern="[0-9]*"
               value={m2}
-              onChange={(e) => onChange('m2', e.target.value)}
+              onChange={(e) => {
+                const onlyDigits = e.target.value.replace(/\D/g, '').slice(0, 4);
+                onChange('m2', onlyDigits);
+              }}
               placeholder="Ej: 85"
-              min={20}
-              max={2000}
-              className="dark-input pr-14"
+              className="dark-input dark-input-big pr-20 no-spin"
             />
-            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-medium text-[#71717A]">
+            <span className="absolute right-5 top-1/2 -translate-y-1/2 text-base font-semibold text-[#A1A1AA]">
               m²
             </span>
           </div>
@@ -1048,27 +1050,6 @@ function StepContact({
         <ArrowLeft className="w-4 h-4" />
         Atrás
       </button>
-
-      <style jsx global>{`
-        .dark-input {
-          width: 100%;
-          padding: 0.95rem 1rem;
-          background: #171717;
-          border: 1px solid #262626;
-          border-radius: 0.75rem;
-          color: #fafafa;
-          font-size: 0.95rem;
-          transition: border-color 0.15s, box-shadow 0.15s;
-        }
-        .dark-input::placeholder {
-          color: #52525b;
-        }
-        .dark-input:focus {
-          outline: none;
-          border-color: #d4a574;
-          box-shadow: 0 0 0 3px rgba(212, 165, 116, 0.18);
-        }
-      `}</style>
     </div>
   );
 }

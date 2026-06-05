@@ -25,3 +25,41 @@ body {
     text-wrap: balance;
   }
 }
+
+/* === Inputs reutilizables del funnel inmobiliaria-erik === */
+.dark-input {
+  width: 100%;
+  padding: 0.95rem 1rem;
+  background: #171717;
+  border: 1px solid #262626;
+  border-radius: 0.75rem;
+  color: #fafafa;
+  font-size: 0.95rem;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.dark-input::placeholder {
+  color: #52525b;
+}
+.dark-input:focus {
+  outline: none;
+  border-color: #d4a574;
+  box-shadow: 0 0 0 3px rgba(212, 165, 116, 0.18);
+}
+
+/* Variante grande (m²) */
+.dark-input-big {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 1.1rem 1.1rem;
+}
+
+/* Quitar flechitas del input number */
+.no-spin::-webkit-outer-spin-button,
+.no-spin::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.no-spin {
+  -moz-appearance: textfield;
+}
