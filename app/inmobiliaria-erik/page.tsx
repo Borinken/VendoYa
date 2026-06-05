@@ -217,7 +217,7 @@ export default function InmobiliariaErikLanding() {
             <StepCards
               eyebrow="Ubicación"
               title="¿En qué zona está la propiedad?"
-              subtitle="Compramos en Antequera y alrededores"
+              subtitle="Compramos en Antequera y comarca"
               options={ZONAS}
               selected={form.ubicacion}
               onSelect={(v) => pickAndAdvance('ubicacion', v, 3)}
@@ -274,8 +274,12 @@ function Welcome({ onStart }: { onStart: () => void }) {
           casa o piso
         </span>
         <br />
-        en Antequera
+        en Antequera y comarca
       </h1>
+
+      <p className="text-sm sm:text-base text-[#71717A] mb-3 max-w-md mx-auto">
+        Antequera · Archidona · Bobadilla · Mollina · Humilladero · y alrededores
+      </p>
 
       <p className="text-lg text-[#A1A1AA] mb-10 max-w-md mx-auto leading-relaxed">
         La tomamos tal como está. Sin reformas. Pago rápido.
