@@ -186,15 +186,15 @@ export default function LeadsAdminPage() {
 
   if (!authed) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-emerald-900 flex items-center justify-center px-4">
-        <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
-          <div className="w-14 h-14 bg-emerald-500 rounded-2xl flex items-center justify-center mb-5 mx-auto">
-            <Lock className="w-7 h-7 text-white" />
+      <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center px-4">
+        <div className="bg-[#171717] border border-[#262626] rounded-2xl p-8 w-full max-w-md">
+          <div className="w-14 h-14 bg-gradient-to-br from-[#D4A574] to-[#A87B4B] rounded-2xl flex items-center justify-center mb-5 mx-auto">
+            <Lock className="w-7 h-7 text-black" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 text-center mb-2">
+          <h1 className="text-2xl font-bold text-[#FAFAFA] text-center mb-2">
             Panel de Leads
           </h1>
-          <p className="text-sm text-gray-500 text-center mb-6">
+          <p className="text-sm text-[#A1A1AA] text-center mb-6">
             Introduce la contraseña de administración
           </p>
           <form
@@ -209,18 +209,18 @@ export default function LeadsAdminPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Contraseña"
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+              className="w-full px-4 py-3 bg-[#0A0A0A] border border-[#262626] rounded-xl text-[#FAFAFA] placeholder:text-[#52525B] focus:outline-none focus:border-[#D4A574] focus:ring-2 focus:ring-[#D4A574]/20"
               autoFocus
             />
             {error && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+              <div className="p-3 bg-red-950/40 border border-red-900/60 rounded-lg text-sm text-red-300">
                 {error}
               </div>
             )}
             <button
               type="submit"
               disabled={loading || !password}
-              className="w-full py-3 bg-emerald-500 text-white rounded-xl font-semibold hover:bg-emerald-600 transition disabled:opacity-60 flex items-center justify-center gap-2"
+              className="w-full py-3 bg-[#D4A574] text-black rounded-xl font-semibold hover:bg-[#E5C28C] transition disabled:opacity-60 flex items-center justify-center gap-2"
             >
               {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Entrar'}
             </button>
@@ -231,32 +231,32 @@ export default function LeadsAdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-20">
+    <div className="min-h-screen bg-[#0A0A0A] text-[#FAFAFA]">
+      <header className="bg-[#0F0F0F] border-b border-[#1F1F1F] sticky top-0 z-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-4 flex-wrap">
           <div>
-            <h1 className="text-xl font-bold text-gray-900">Leads recibidos</h1>
-            <p className="text-xs text-gray-500">
+            <h1 className="text-xl font-bold text-[#FAFAFA]">Leads recibidos</h1>
+            <p className="text-xs text-[#A1A1AA]">
               {nuevos.length} nuevos · {historial.length} en historial
             </p>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex items-center gap-1.5 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg">
-              <UserCheck className="w-4 h-4 text-gray-400" />
+            <div className="flex items-center gap-1.5 px-3 py-2 bg-[#171717] border border-[#262626] rounded-lg">
+              <UserCheck className="w-4 h-4 text-[#71717A]" />
               <input
                 type="text"
                 value={currentUser}
                 onChange={(e) => setCurrentUser(e.target.value)}
                 placeholder="Tu nombre"
-                className="bg-transparent outline-none text-sm w-28"
+                className="bg-transparent outline-none text-sm w-28 text-[#FAFAFA] placeholder:text-[#52525B]"
               />
             </div>
 
             <button
               onClick={() => loadLeads(password)}
               disabled={loading}
-              className="inline-flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-3 py-2 bg-[#171717] border border-[#262626] rounded-lg text-sm text-[#D4D4D8] hover:bg-[#1F1F1F] hover:border-[#3F3F46] disabled:opacity-50"
             >
               <RefreshCw
                 className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`}
@@ -265,7 +265,7 @@ export default function LeadsAdminPage() {
             </button>
             <a
               href="/leads/embudo"
-              className="inline-flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm hover:bg-gray-50"
+              className="inline-flex items-center gap-2 px-3 py-2 bg-[#171717] border border-[#262626] rounded-lg text-sm text-[#D4D4D8] hover:bg-[#1F1F1F] hover:border-[#3F3F46]"
             >
               📊 Embudo
             </a>
@@ -273,7 +273,7 @@ export default function LeadsAdminPage() {
               href={`/api/inmobiliaria-erik-leads/export?key=${encodeURIComponent(
                 password
               )}`}
-              className="inline-flex items-center gap-2 px-3 py-2 bg-emerald-500 text-white rounded-lg text-sm font-medium hover:bg-emerald-600"
+              className="inline-flex items-center gap-2 px-3 py-2 bg-[#D4A574] text-black rounded-lg text-sm font-medium hover:bg-[#E5C28C]"
             >
               <Download className="w-4 h-4" />
               CSV / Excel
@@ -285,7 +285,7 @@ export default function LeadsAdminPage() {
                 setPassword('');
                 setLeads([]);
               }}
-              className="inline-flex items-center gap-2 px-3 py-2 text-sm text-gray-500 hover:text-gray-700"
+              className="inline-flex items-center gap-2 px-3 py-2 text-sm text-[#A1A1AA] hover:text-white"
             >
               Salir
             </button>
@@ -293,57 +293,55 @@ export default function LeadsAdminPage() {
         </div>
 
         {/* Tabs */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex gap-1 border-t border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex gap-1 border-t border-[#1F1F1F]">
           <TabBtn
             active={tab === 'nuevos'}
             onClick={() => setTab('nuevos')}
             label="Nuevos"
             count={nuevos.length}
-            color="emerald"
           />
           <TabBtn
             active={tab === 'historial'}
             onClick={() => setTab('historial')}
             label="Historial"
             count={historial.length}
-            color="gray"
           />
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
-        <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
+        <div className="bg-[#171717] rounded-xl border border-[#262626] p-4 mb-6">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#71717A]" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar por nombre, teléfono, ubicación, atendido por..."
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 text-sm"
+              className="w-full pl-10 pr-4 py-2.5 bg-[#0A0A0A] border border-[#262626] rounded-lg text-[#FAFAFA] placeholder:text-[#52525B] focus:outline-none focus:border-[#D4A574] focus:ring-2 focus:ring-[#D4A574]/20 text-sm"
             />
           </div>
         </div>
 
         {loading && leads.length === 0 ? (
-          <div className="bg-white rounded-xl border border-gray-200 p-16 text-center">
-            <Loader2 className="w-8 h-8 animate-spin text-emerald-500 mx-auto" />
+          <div className="bg-[#171717] rounded-xl border border-[#262626] p-16 text-center">
+            <Loader2 className="w-8 h-8 animate-spin text-[#D4A574] mx-auto" />
           </div>
         ) : filtered.length === 0 ? (
-          <div className="bg-white rounded-xl border border-gray-200 p-16 text-center">
-            <Inbox className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500">
+          <div className="bg-[#171717] rounded-xl border border-[#262626] p-16 text-center">
+            <Inbox className="w-12 h-12 text-[#3F3F46] mx-auto mb-3" />
+            <p className="text-[#A1A1AA]">
               {tab === 'nuevos'
                 ? '¡Todo al día! No hay leads nuevos pendientes.'
                 : 'Aún no hay leads en el historial.'}
             </p>
           </div>
         ) : (
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <div className="bg-[#171717] rounded-xl border border-[#262626] overflow-hidden">
             <div className="overflow-x-auto">
               <table className="min-w-full text-sm">
-                <thead className="bg-gray-50 border-b border-gray-200">
-                  <tr className="text-left text-xs font-semibold text-gray-600 uppercase">
+                <thead className="bg-[#0F0F0F] border-b border-[#262626]">
+                  <tr className="text-left text-xs font-semibold text-[#A1A1AA] uppercase">
                     <th className="px-4 py-3">Fecha</th>
                     <th className="px-4 py-3">Nombre</th>
                     <th className="px-4 py-3">Teléfono</th>
@@ -355,7 +353,7 @@ export default function LeadsAdminPage() {
                     <th className="px-4 py-3 text-right">Acción</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-[#262626]">
                   {filtered.map((l) => {
                     const date = new Date(l.created_at);
                     const atDate = l.atendido_at
@@ -363,14 +361,14 @@ export default function LeadsAdminPage() {
                       : null;
                     const isUpdating = updatingId === l.id;
                     return (
-                      <tr key={l.id} className="hover:bg-gray-50 align-top">
-                        <td className="px-4 py-3 whitespace-nowrap text-gray-600">
+                      <tr key={l.id} className="hover:bg-[#1C1C1C] align-top">
+                        <td className="px-4 py-3 whitespace-nowrap text-[#A1A1AA]">
                           <div className="flex items-center gap-1.5">
-                            <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                            <Calendar className="w-3.5 h-3.5 text-[#71717A]" />
                             <span>
                               {date.toLocaleDateString('es-ES')}
                               <br />
-                              <span className="text-xs text-gray-400">
+                              <span className="text-xs text-[#71717A]">
                                 {date.toLocaleTimeString('es-ES', {
                                   hour: '2-digit',
                                   minute: '2-digit',
@@ -379,7 +377,7 @@ export default function LeadsAdminPage() {
                             </span>
                           </div>
                         </td>
-                        <td className="px-4 py-3 font-semibold text-gray-900">
+                        <td className="px-4 py-3 font-semibold text-[#FAFAFA]">
                           {l.nombre}
                         </td>
                         <td className="px-4 py-3">
@@ -390,31 +388,31 @@ export default function LeadsAdminPage() {
                             )}`}
                             target="_blank"
                             rel="noreferrer"
-                            className="inline-flex items-center gap-1 text-emerald-600 hover:text-emerald-700 font-medium"
+                            className="inline-flex items-center gap-1 text-[#D4A574] hover:text-[#E5C28C] font-medium"
                           >
                             <Phone className="w-3.5 h-3.5" />
                             {l.telefono}
                           </a>
                         </td>
-                        <td className="px-4 py-3 text-gray-700">
+                        <td className="px-4 py-3 text-[#D4D4D8]">
                           <div className="flex items-start gap-1">
-                            <MapPin className="w-3.5 h-3.5 text-gray-400 mt-0.5 flex-shrink-0" />
+                            <MapPin className="w-3.5 h-3.5 text-[#71717A] mt-0.5 flex-shrink-0" />
                             <span>{l.ubicacion}</span>
                           </div>
                         </td>
                         <td className="px-4 py-3">
-                          <span className="inline-block px-2.5 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">
+                          <span className="inline-block px-2.5 py-1 bg-[#262626] text-[#D4D4D8] rounded-full text-xs font-medium">
                             {TIPO_LABEL[l.tipo_vivienda] || l.tipo_vivienda}
                           </span>
                         </td>
                         {tab === 'historial' && (
-                          <td className="px-4 py-3 text-gray-700">
+                          <td className="px-4 py-3 text-[#D4D4D8]">
                             <div className="flex flex-col">
                               <span className="font-medium">
                                 {l.atendido_por || '—'}
                               </span>
                               {atDate && (
-                                <span className="text-xs text-gray-400">
+                                <span className="text-xs text-[#71717A]">
                                   {atDate.toLocaleDateString('es-ES')}{' '}
                                   {atDate.toLocaleTimeString('es-ES', {
                                     hour: '2-digit',
@@ -430,7 +428,7 @@ export default function LeadsAdminPage() {
                             <button
                               onClick={() => marcarAtendido(l)}
                               disabled={isUpdating}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500 text-white text-xs font-medium rounded-lg hover:bg-emerald-600 disabled:opacity-60"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#D4A574] text-black text-xs font-semibold rounded-lg hover:bg-[#E5C28C] disabled:opacity-60"
                             >
                               {isUpdating ? (
                                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -443,7 +441,7 @@ export default function LeadsAdminPage() {
                             <button
                               onClick={() => devolverANuevos(l)}
                               disabled={isUpdating}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-50 disabled:opacity-60"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#262626] border border-[#3F3F46] text-[#D4D4D8] text-xs font-medium rounded-lg hover:bg-[#2F2F2F] disabled:opacity-60"
                             >
                               {isUpdating ? (
                                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -472,35 +470,27 @@ function TabBtn({
   onClick,
   label,
   count,
-  color,
 }: {
   active: boolean;
   onClick: () => void;
   label: string;
   count: number;
-  color: 'emerald' | 'gray';
 }) {
-  const activeBorder =
-    color === 'emerald' ? 'border-emerald-500' : 'border-gray-700';
-  const activeText =
-    color === 'emerald' ? 'text-emerald-600' : 'text-gray-900';
   return (
     <button
       onClick={onClick}
       className={`relative px-4 py-3 text-sm font-semibold transition ${
         active
-          ? `${activeText} border-b-2 ${activeBorder} -mb-px`
-          : 'text-gray-500 hover:text-gray-700'
+          ? 'text-[#D4A574] border-b-2 border-[#D4A574] -mb-px'
+          : 'text-[#A1A1AA] hover:text-white'
       }`}
     >
       {label}
       <span
         className={`ml-2 inline-block px-2 py-0.5 rounded-full text-xs ${
           active
-            ? color === 'emerald'
-              ? 'bg-emerald-100 text-emerald-700'
-              : 'bg-gray-200 text-gray-700'
-            : 'bg-gray-100 text-gray-500'
+            ? 'bg-[#D4A574]/15 text-[#D4A574]'
+            : 'bg-[#262626] text-[#A1A1AA]'
         }`}
       >
         {count}

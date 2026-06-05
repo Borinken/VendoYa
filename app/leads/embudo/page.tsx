@@ -68,12 +68,12 @@ export default function FunnelPage() {
 
   if (!password) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-        <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
+      <div className="min-h-screen bg-[#0A0A0A] text-[#FAFAFA] flex items-center justify-center px-4">
+        <div className="bg-[#171717] border border-[#262626] rounded-2xl p-8 w-full max-w-md">
           <h1 className="text-xl font-bold mb-3">Embudo de conversión</h1>
-          <p className="text-sm text-gray-500 mb-5">
+          <p className="text-sm text-[#A1A1AA] mb-5">
             Inicia sesión primero en{' '}
-            <Link href="/leads" className="text-emerald-600 underline">
+            <Link href="/leads" className="text-[#D4A574] underline">
               /leads
             </Link>
             .
@@ -84,19 +84,19 @@ export default function FunnelPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200">
+    <div className="min-h-screen bg-[#0A0A0A] text-[#FAFAFA]">
+      <header className="bg-[#0F0F0F] border-b border-[#1F1F1F]">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-3">
             <Link
               href="/leads"
-              className="inline-flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900"
+              className="inline-flex items-center gap-1.5 text-sm text-[#A1A1AA] hover:text-white"
             >
               <ArrowLeft className="w-4 h-4" />
               Volver a leads
             </Link>
-            <span className="text-gray-300">|</span>
-            <h1 className="text-lg font-bold text-gray-900">
+            <span className="text-[#3F3F46]">|</span>
+            <h1 className="text-lg font-bold text-[#FAFAFA]">
               Embudo de conversión
             </h1>
           </div>
@@ -109,7 +109,7 @@ export default function FunnelPage() {
                 setDays(d);
                 void load(password, d);
               }}
-              className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white"
+              className="px-3 py-2 bg-[#171717] border border-[#262626] rounded-lg text-sm text-[#FAFAFA] focus:outline-none focus:border-[#D4A574]"
             >
               <option value="1">Hoy</option>
               <option value="3">Últimos 3 días</option>
@@ -119,7 +119,7 @@ export default function FunnelPage() {
             <button
               onClick={() => load(password, days)}
               disabled={loading}
-              className="inline-flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-3 py-2 bg-[#171717] border border-[#262626] rounded-lg text-sm text-[#D4D4D8] hover:bg-[#1F1F1F] hover:border-[#3F3F46] disabled:opacity-50"
             >
               <RefreshCw
                 className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`}
@@ -132,11 +132,11 @@ export default function FunnelPage() {
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
         {loading && !data ? (
-          <div className="bg-white rounded-xl border border-gray-200 p-16 text-center">
-            <Loader2 className="w-8 h-8 animate-spin text-gray-400 mx-auto" />
+          <div className="bg-[#171717] rounded-xl border border-[#262626] p-16 text-center">
+            <Loader2 className="w-8 h-8 animate-spin text-[#D4A574] mx-auto" />
           </div>
         ) : error ? (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-red-700 text-sm">
+          <div className="bg-red-950/40 border border-red-900/60 rounded-xl p-6 text-red-300 text-sm">
             {error}
           </div>
         ) : !data ? null : (
@@ -165,12 +165,12 @@ export default function FunnelPage() {
               />
             </div>
 
-            <div className="bg-white rounded-xl border border-gray-200 p-5 sm:p-6">
+            <div className="bg-[#171717] rounded-xl border border-[#262626] p-5 sm:p-6">
               <div className="flex items-center justify-between mb-5">
-                <h2 className="font-semibold text-gray-900">
+                <h2 className="font-semibold text-[#FAFAFA]">
                   Embudo paso a paso
                 </h2>
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-[#71717A]">
                   Últimos {data.days} {data.days === 1 ? 'día' : 'días'}
                 </span>
               </div>
@@ -186,24 +186,24 @@ export default function FunnelPage() {
                   return (
                     <div key={stage.step}>
                       <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-sm font-medium text-gray-800">
+                        <span className="text-sm font-medium text-[#D4D4D8]">
                           {stage.label}
                         </span>
-                        <span className="text-sm font-bold text-gray-900">
+                        <span className="text-sm font-bold text-[#FAFAFA]">
                           {stage.count}{' '}
-                          <span className="text-gray-400 font-normal">
+                          <span className="text-[#71717A] font-normal">
                             ({stage.pct}%)
                           </span>
                         </span>
                       </div>
-                      <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="h-2.5 bg-[#262626] rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 transition-all"
+                          className="h-full bg-gradient-to-r from-[#D4A574] to-[#E5C28C] transition-all"
                           style={{ width: `${stage.pct}%` }}
                         />
                       </div>
                       {next && drop > 0 && (
-                        <div className="flex items-center gap-1 mt-1 text-xs text-rose-600">
+                        <div className="flex items-center gap-1 mt-1 text-xs text-rose-400">
                           <TrendingDown className="w-3 h-3" />
                           <span>
                             {drop} se fueron aquí ({dropPct}% drop)
@@ -216,7 +216,7 @@ export default function FunnelPage() {
               </div>
             </div>
 
-            <p className="text-xs text-gray-500 mt-4 text-center">
+            <p className="text-xs text-[#71717A] mt-4 text-center">
               El tracking se inició al desplegar esta versión. Los visitantes
               previos no aparecen en estas estadísticas.
             </p>
@@ -242,17 +242,17 @@ function Stat({
     <div
       className={`p-4 rounded-xl border ${
         accent
-          ? 'bg-emerald-50 border-emerald-200'
-          : 'bg-white border-gray-200'
+          ? 'bg-[#D4A574]/[0.08] border-[#D4A574]/30'
+          : 'bg-[#171717] border-[#262626]'
       }`}
     >
-      <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
+      <div className="flex items-center gap-1.5 text-xs text-[#A1A1AA] mb-1">
         {icon}
         {label}
       </div>
       <div
         className={`text-2xl font-bold ${
-          accent ? 'text-emerald-700' : 'text-gray-900'
+          accent ? 'text-[#D4A574]' : 'text-[#FAFAFA]'
         }`}
       >
         {value}
