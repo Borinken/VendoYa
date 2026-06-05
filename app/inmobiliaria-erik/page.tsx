@@ -17,6 +17,7 @@ import {
   Phone,
   User,
   Sparkles,
+  ShieldCheck,
 } from 'lucide-react';
 
 // ===== Paleta dark premium =====
@@ -471,6 +472,14 @@ function StepContact({
             {error}
           </div>
         )}
+
+        <div className="flex items-start gap-2.5 p-3 rounded-lg bg-[#D4A574]/[0.06] border border-[#D4A574]/20">
+          <ShieldCheck className="w-4 h-4 text-[#D4A574] flex-shrink-0 mt-0.5" />
+          <p className="text-xs text-[#D4D4D8] leading-relaxed">
+            Te llamo <strong className="text-white">una sola vez</strong> para
+            darte la oferta. Sin agobios.
+          </p>
+        </div>
 
         <button
           type="submit"
