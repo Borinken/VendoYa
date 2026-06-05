@@ -395,7 +395,7 @@ function Welcome({ onStart }: { onStart: () => void }) {
               Tu agente
             </p>
             <h3 className="text-lg font-semibold text-[#FAFAFA] leading-tight">
-              Erik · Inmobiliaria Antequera
+              Antequera y Comarca
             </h3>
             <p className="text-sm text-[#A1A1AA] mt-1 leading-snug">
               Te atiendo personalmente y te llamo en menos de 24 horas con tu oferta.
