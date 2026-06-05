@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import Image from 'next/image';
 import {
   Home,
   Building2,
@@ -264,7 +265,7 @@ export default function InmobiliariaErikLanding() {
 
       {/* Main */}
       <main className="flex-1 flex items-center justify-center px-4 sm:px-6 py-10">
-        <div className="w-full max-w-2xl">
+        <div className={`w-full ${step === 0 ? 'max-w-5xl' : 'max-w-2xl'}`}>
           {step === 0 && <Welcome onStart={() => setStep(1)} />}
 
           {step === 1 && (
@@ -325,40 +326,90 @@ export default function InmobiliariaErikLanding() {
 // ============ Welcome ============
 function Welcome({ onStart }: { onStart: () => void }) {
   return (
-    <div className="text-center animate-[fadeIn_400ms_ease-out]">
-      <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#171717] border border-[#262626] mb-8">
-        <Sparkles className="w-3.5 h-3.5 text-[#D4A574]" />
-        <span className="text-xs font-medium text-[#D4A574]">
-          Valoración gratuita · sin compromiso
-        </span>
+    <div className="animate-[fadeIn_400ms_ease-out] grid lg:grid-cols-[1fr_360px] gap-10 lg:gap-14 items-center">
+      {/* Columna izquierda: copy + CTA */}
+      <div className="text-center lg:text-left order-2 lg:order-1">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#171717] border border-[#262626] mb-6">
+          <Sparkles className="w-3.5 h-3.5 text-[#D4A574]" />
+          <span className="text-xs font-medium text-[#D4A574]">
+            Valoración gratuita · sin compromiso
+          </span>
+        </div>
+
+        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight leading-[1.08] mb-5">
+          Compro tu{' '}
+          <span className="bg-gradient-to-r from-[#D4A574] to-[#E5C28C] bg-clip-text text-transparent">
+            casa tal y como está
+          </span>{' '}
+          en Antequera, Archidona, Bobadilla, Mollina, Humilladero y alrededores.
+        </h1>
+
+        <p className="text-base sm:text-lg text-[#A1A1AA] mb-8 max-w-md mx-auto lg:mx-0 leading-relaxed">
+          No necesitas reformar nada, no pagas comisión y tú eliges cuándo
+          escriturar.
+        </p>
+
+        <button
+          onClick={onStart}
+          className="group inline-flex items-center gap-2 px-7 py-4 bg-[#D4A574] text-black rounded-xl font-semibold text-base hover:bg-[#E5C28C] transition shadow-[0_0_40px_rgba(212,165,116,0.25)]"
+        >
+          Quiero mi oferta en 24 horas
+          <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+        </button>
+
+        <div className="mt-8 grid grid-cols-3 gap-2.5 max-w-md mx-auto lg:mx-0">
+          <Stat label="Sin compromiso" />
+          <Stat label="Respuesta 24 h" />
+          <Stat label="Oferta real" />
+        </div>
       </div>
 
-      <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.05] mb-5">
-        Compro tu{' '}
-        <span className="bg-gradient-to-r from-[#D4A574] to-[#E5C28C] bg-clip-text text-transparent">
-          casa tal y como está
-        </span>
-        <br />
-        en Antequera, Archidona, Bobadilla, Mollina, Humilladero y alrededores.
-      </h1>
+      {/* Columna derecha: tarjeta del agente */}
+      <div className="order-1 lg:order-2 mx-auto w-full max-w-[340px]">
+        <div className="relative rounded-2xl bg-[#171717] border border-[#262626] p-5 shadow-[0_0_60px_rgba(212,165,116,0.08)]">
+          {/* Foto */}
+          <div className="relative w-full aspect-[4/5] rounded-xl overflow-hidden border border-[#3F3F46] bg-[#0A0A0A]">
+            <Image
+              src="/erik.jpg"
+              alt="Erik · Agente inmobiliario en Antequera"
+              fill
+              priority
+              sizes="(max-width: 1024px) 320px, 340px"
+              className="object-cover"
+            />
+            {/* Badge online */}
+            <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/70 backdrop-blur-md border border-[#262626]">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
+              </span>
+              <span className="text-[10px] font-medium text-white tracking-wide">
+                Disponible hoy
+              </span>
+            </div>
+          </div>
 
-      <p className="text-base sm:text-lg text-[#A1A1AA] mb-10 max-w-md mx-auto leading-relaxed">
-        No necesitas reformar nada, no pagas comisión y tú eliges cuándo
-        escriturar.
-      </p>
+          {/* Info agente */}
+          <div className="mt-4 text-left">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#D4A574] font-semibold mb-1">
+              Tu agente
+            </p>
+            <h3 className="text-lg font-semibold text-[#FAFAFA] leading-tight">
+              Erik · Inmobiliaria Antequera
+            </h3>
+            <p className="text-sm text-[#A1A1AA] mt-1 leading-snug">
+              Te atiendo personalmente y te llamo en menos de 24 horas con tu oferta.
+            </p>
 
-      <button
-        onClick={onStart}
-        className="group inline-flex items-center gap-2 px-7 py-4 bg-[#D4A574] text-black rounded-xl font-semibold text-base hover:bg-[#E5C28C] transition shadow-[0_0_40px_rgba(212,165,116,0.25)]"
-      >
-        Quiero mi oferta en 24 horas
-        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-      </button>
-
-      <div className="mt-10 grid grid-cols-3 gap-3 max-w-md mx-auto">
-        <Stat label="Sin compromiso" />
-        <Stat label="Respuesta 24 h" />
-        <Stat label="Oferta real" />
+            {/* Línea de confianza */}
+            <div className="mt-4 flex items-center gap-2 pt-4 border-t border-[#262626]">
+              <ShieldCheck className="w-4 h-4 text-[#D4A574] shrink-0" />
+              <p className="text-xs text-[#A1A1AA]">
+                Trato directo, sin intermediarios.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
       <style jsx global>{`
