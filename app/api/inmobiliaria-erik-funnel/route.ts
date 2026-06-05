@@ -13,11 +13,20 @@ function getSupabase() {
 const VALID_STEPS = [
   'page_view',
   'welcome_view',
+  'cta_welcome_click',
+  'step_1_view',
   'step_1_tipo',
+  'step_2_view',
   'step_2_zona',
-  'step_3_urgencia',
-  'step_4_contacto_view',
-  'step_4_contacto_submit_attempt',
+  'step_3_view',
+  'step_3_urgencia', // legacy
+  'step_3_details_complete',
+  'step_4_price_view',
+  'step_4_price_continue',
+  'step_4_contacto_view', // legacy
+  'step_4_contacto_submit_attempt', // legacy
+  'step_5_contacto_view',
+  'step_5_contacto_submit_attempt',
   'submit_success',
   'submit_error',
   'back_clicked',
@@ -107,15 +116,25 @@ export async function GET(request: Request) {
     };
 
     // Reducir a por-sesion: el paso mas avanzado alcanzado
+    // Soportamos eventos legacy (anterior funnel) y los nuevos
     const STEP_ORDER: Record<string, number> = {
       page_view: 0,
       welcome_view: 1,
-      step_1_tipo: 2,
-      step_2_zona: 3,
-      step_3_urgencia: 4,
-      step_4_contacto_view: 5,
-      step_4_contacto_submit_attempt: 6,
-      submit_success: 7,
+      cta_welcome_click: 2,
+      step_1_view: 2,
+      step_1_tipo: 3,
+      step_2_view: 3,
+      step_2_zona: 4,
+      step_3_view: 4,
+      step_3_urgencia: 5, // legacy
+      step_3_details_complete: 5,
+      step_4_price_view: 6,
+      step_4_price_continue: 6,
+      step_4_contacto_view: 7, // legacy
+      step_4_contacto_submit_attempt: 7, // legacy
+      step_5_contacto_view: 7,
+      step_5_contacto_submit_attempt: 7,
+      submit_success: 8,
     };
 
     const reached: Record<string, number> = {};
@@ -130,12 +149,13 @@ export async function GET(request: Request) {
     const stages = [
       { key: 'page_view', label: '1. Llega a la página' },
       { key: 'welcome_view', label: '2. Ve el welcome' },
-      { key: 'step_1_tipo', label: '3. Click en Tipo' },
-      { key: 'step_2_zona', label: '4. Click en Zona' },
-      { key: 'step_3_urgencia', label: '5. Click en Urgencia' },
-      { key: 'step_4_contacto_view', label: '6. Llega al form' },
-      { key: 'step_4_contacto_submit_attempt', label: '7. Click en enviar' },
-      { key: 'submit_success', label: '8. Lead enviado' },
+      { key: 'cta_welcome_click', label: '3. Click "Calcular precio"' },
+      { key: 'step_1_tipo', label: '4. Elige tipo' },
+      { key: 'step_2_zona', label: '5. Elige zona' },
+      { key: 'step_3_details_complete', label: '6. Completa detalles' },
+      { key: 'step_4_price_continue', label: '7. Ve precio y avanza' },
+      { key: 'step_5_contacto_submit_attempt', label: '8. Click en enviar' },
+      { key: 'submit_success', label: '9. Lead enviado' },
     ];
 
     const totalSessions = Object.keys(reached).length;

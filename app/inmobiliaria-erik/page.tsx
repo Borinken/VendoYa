@@ -8,9 +8,6 @@ import {
   Building,
   HelpCircle,
   MapPin,
-  Zap,
-  Calendar,
-  Search,
   Loader2,
   CheckCircle2,
   ArrowRight,
@@ -31,7 +28,7 @@ import {
 // accent:    #D4A574 (dorado cobre)
 // accent-h:  #C29560
 
-type Step = 0 | 1 | 2 | 3 | 4;
+type Step = 0 | 1 | 2 | 3 | 4 | 5;
 
 interface Option {
   value: string;
@@ -54,35 +51,87 @@ const ZONAS: Option[] = [
   { value: 'Otros', label: 'Otros', icon: <MapPin className="w-7 h-7" /> },
 ];
 
-const URGENCIAS: Option[] = [
+const ESTADOS: Option[] = [
   {
-    value: 'inmediato',
-    label: 'Lo antes posible',
-    icon: <Zap className="w-7 h-7" />,
-    hint: 'Quiero vender ya',
+    value: 'nuevo',
+    label: 'Como nuevo',
+    icon: <Sparkles className="w-6 h-6" />,
+    hint: 'Recién reformada o seminueva',
   },
   {
-    value: '1_3_meses',
-    label: 'En 1-3 meses',
-    icon: <Calendar className="w-7 h-7" />,
-    hint: 'En los próximos meses',
+    value: 'bueno',
+    label: 'Buen estado',
+    icon: <CheckCircle2 className="w-6 h-6" />,
+    hint: 'Habitable, sin grandes obras',
   },
   {
-    value: '3_6_meses',
-    label: 'En 3-6 meses',
-    icon: <Calendar className="w-7 h-7" />,
-    hint: 'Sin prisa',
+    value: 'a_reformar',
+    label: 'A reformar',
+    icon: <Building2 className="w-6 h-6" />,
+    hint: 'Necesita actualización',
   },
   {
-    value: 'explorando',
-    label: 'Solo explorando',
-    icon: <Search className="w-7 h-7" />,
-    hint: 'Quiero saber el valor',
+    value: 'ruina',
+    label: 'Para reformar entera',
+    icon: <HelpCircle className="w-6 h-6" />,
+    hint: 'Reforma integral / muy antigua',
   },
 ];
 
-const URGENCIA_LABELS: Record<string, string> = Object.fromEntries(
-  URGENCIAS.map((u) => [u.value, u.label])
+// ==== Calculadora de valoración =====
+// Precios orientativos €/m² por zona (Antequera y comarca, 2025-2026)
+const ZONE_BASE: Record<string, number> = {
+  Antequera: 950,
+  Archidona: 750,
+  Bobadilla: 650,
+  Otros: 550,
+};
+const TYPE_MULT: Record<string, number> = {
+  casa_pueblo: 0.85,
+  piso: 1.0,
+  chalet: 1.4,
+  otra: 0.9,
+};
+const STATE_MULT: Record<string, number> = {
+  nuevo: 1.15,
+  bueno: 1.0,
+  a_reformar: 0.75,
+  ruina: 0.55,
+};
+
+function roundToNice(n: number): number {
+  if (n < 50_000) return Math.round(n / 1000) * 1000;
+  if (n < 200_000) return Math.round(n / 2500) * 2500;
+  return Math.round(n / 5000) * 5000;
+}
+
+function estimateRange(
+  zona: string,
+  tipo: string,
+  estado: string,
+  m2: number
+): { low: number; high: number } | null {
+  const base = ZONE_BASE[zona];
+  const tm = TYPE_MULT[tipo];
+  const sm = STATE_MULT[estado];
+  if (!base || !tm || !sm || !m2 || m2 < 20 || m2 > 2000) return null;
+  const value = base * tm * sm * m2;
+  return {
+    low: roundToNice(value * 0.9),
+    high: roundToNice(value * 1.1),
+  };
+}
+
+function formatEUR(n: number): string {
+  return new Intl.NumberFormat('es-ES', {
+    style: 'currency',
+    currency: 'EUR',
+    maximumFractionDigits: 0,
+  }).format(n);
+}
+
+const ESTADO_LABELS: Record<string, string> = Object.fromEntries(
+  ESTADOS.map((e) => [e.value, e.label])
 );
 
 export default function InmobiliariaErikLanding() {
@@ -90,14 +139,26 @@ export default function InmobiliariaErikLanding() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [calculating, setCalculating] = useState(false);
 
   const [form, setForm] = useState({
     tipo_vivienda: '',
     ubicacion: '',
-    urgencia: '',
+    m2: '',
+    dormitorios: '',
+    estado_propiedad: '',
     nombre: '',
     telefono: '',
   });
+
+  const priceEstimate = useMemo(() => {
+    return estimateRange(
+      form.ubicacion,
+      form.tipo_vivienda,
+      form.estado_propiedad,
+      Number(form.m2)
+    );
+  }, [form.ubicacion, form.tipo_vivienda, form.estado_propiedad, form.m2]);
 
   // ===== Funnel tracking =====
   const sessionIdRef = (() => {
@@ -150,30 +211,66 @@ export default function InmobiliariaErikLanding() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Track entrada al paso 4 (form de contacto)
+  // Track entrada a cada paso
   useEffect(() => {
-    if (step === 4) track('step_4_contacto_view');
+    if (step === 1) track('step_1_view');
+    else if (step === 2) track('step_2_view');
+    else if (step === 3) track('step_3_view');
+    else if (step === 4) track('step_4_price_view');
+    else if (step === 5) track('step_5_contacto_view');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
 
   const update = (k: keyof typeof form, v: string) =>
     setForm((f) => ({ ...f, [k]: v }));
 
-  // Auto-avance al elegir opción en pasos 1-3
-  const pickAndAdvance = (key: 'tipo_vivienda' | 'ubicacion' | 'urgencia', value: string, nextStep: Step) => {
+  // Auto-avance al elegir opción en pasos 1-2
+  const pickAndAdvance = (
+    key: 'tipo_vivienda' | 'ubicacion',
+    value: string,
+    nextStep: Step
+  ) => {
     update(key, value);
     setError(null);
-    // Track inmediato del paso completado
     if (key === 'tipo_vivienda') track('step_1_tipo');
     else if (key === 'ubicacion') track('step_2_zona');
-    else if (key === 'urgencia') track('step_3_urgencia');
-    // pequeño delay para que se vea el "selected" antes de pasar
     setTimeout(() => setStep(nextStep), 220);
+  };
+
+  // CTA del welcome → paso 1
+  const startFunnel = () => {
+    track('cta_welcome_click');
+    setStep(1);
+  };
+
+  // Continuar desde detalles → mostrar valoración
+  const continueToPrice = () => {
+    if (!form.m2 || !form.dormitorios || !form.estado_propiedad) {
+      setError('Completa los 3 campos para ver tu valoración.');
+      return;
+    }
+    const m2num = Number(form.m2);
+    if (!m2num || m2num < 20 || m2num > 2000) {
+      setError('Introduce los m² (entre 20 y 2000).');
+      return;
+    }
+    setError(null);
+    setCalculating(true);
+    track('step_3_details_complete');
+    setTimeout(() => {
+      setCalculating(false);
+      setStep(4);
+    }, 1400);
+  };
+
+  const continueToContact = () => {
+    track('step_4_price_continue');
+    setStep(5);
   };
 
   const submit = async () => {
     setError(null);
-    track('step_4_contacto_submit_attempt');
+    track('step_5_contacto_submit_attempt');
     if (!form.nombre.trim() || !form.telefono.trim()) {
       setError('Por favor completa tu nombre y teléfono.');
       return;
@@ -185,6 +282,25 @@ export default function InmobiliariaErikLanding() {
           ? new URLSearchParams(window.location.search)
           : null;
 
+      const estado = form.estado_propiedad;
+      const necesita_reforma =
+        estado === 'nuevo' || estado === 'bueno'
+          ? 'esta_bien'
+          : estado === 'a_reformar'
+          ? 'reforma_parcial'
+          : 'reforma_integral';
+
+      const estimacionStr = priceEstimate
+        ? `${formatEUR(priceEstimate.low)} – ${formatEUR(priceEstimate.high)}`
+        : 'sin estimación';
+
+      const comentarios = [
+        `m²: ${form.m2}`,
+        `Dormitorios: ${form.dormitorios}`,
+        `Estado: ${ESTADO_LABELS[estado] || estado}`,
+        `Estimación mercado: ${estimacionStr}`,
+      ].join(' · ');
+
       const res = await fetch('/api/inmobiliaria-erik-leads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -193,8 +309,8 @@ export default function InmobiliariaErikLanding() {
           telefono: form.telefono,
           ubicacion: form.ubicacion,
           tipo_vivienda: form.tipo_vivienda,
-          necesita_reforma: 'esta_bien',
-          comentarios: `Urgencia: ${URGENCIA_LABELS[form.urgencia] || form.urgencia}`,
+          necesita_reforma,
+          comentarios,
           source: 'inmobiliaria-erik-landing',
           utm_source: params?.get('utm_source') || null,
           utm_medium: params?.get('utm_medium') || null,
@@ -213,10 +329,10 @@ export default function InmobiliariaErikLanding() {
     }
   };
 
-  // % de progreso (0 en welcome, 25/50/75/100)
+  // % de progreso (0 en welcome, 5 pasos después)
   const progress = useMemo(() => {
     if (step === 0) return 0;
-    return step * 25;
+    return step * 20;
   }, [step]);
 
   if (success) return <SuccessScreen nombre={form.nombre} />;
@@ -248,7 +364,7 @@ export default function InmobiliariaErikLanding() {
           </div>
           {step > 0 && (
             <span className="text-xs font-medium text-[#A1A1AA]">
-              Paso {step} de 4
+              Paso {step} de 5
             </span>
           )}
         </div>
@@ -266,12 +382,12 @@ export default function InmobiliariaErikLanding() {
       {/* Main */}
       <main className="flex-1 flex items-center justify-center px-4 sm:px-6 py-10">
         <div className={`w-full ${step === 0 ? 'max-w-5xl' : 'max-w-2xl'}`}>
-          {step === 0 && <Welcome onStart={() => setStep(1)} />}
+          {step === 0 && <Welcome onStart={startFunnel} />}
 
           {step === 1 && (
             <StepCards
               eyebrow="Sobre tu propiedad"
-              title="¿Qué tipo de propiedad quieres vender?"
+              title="¿Qué tipo de propiedad quieres valorar?"
               subtitle="Selecciona una opción"
               options={TIPOS}
               selected={form.tipo_vivienda}
@@ -292,24 +408,36 @@ export default function InmobiliariaErikLanding() {
           )}
 
           {step === 3 && (
-            <StepCards
-              eyebrow="Tu plan"
-              title="¿Cuándo te gustaría vender?"
-              subtitle="Esto nos ayuda a darte la mejor oferta"
-              options={URGENCIAS}
-              selected={form.urgencia}
-              onSelect={(v) => pickAndAdvance('urgencia', v, 4)}
+            <StepDetails
+              m2={form.m2}
+              dormitorios={form.dormitorios}
+              estado={form.estado_propiedad}
+              error={error}
+              calculating={calculating}
+              onChange={(k, v) => update(k, v)}
+              onContinue={continueToPrice}
               onBack={() => setStep(2)}
             />
           )}
 
           {step === 4 && (
+            <StepPrice
+              tipo={form.tipo_vivienda}
+              zona={form.ubicacion}
+              estimate={priceEstimate}
+              onContinue={continueToContact}
+              onBack={() => setStep(3)}
+            />
+          )}
+
+          {step === 5 && (
             <StepContact
               form={form}
               update={update}
               error={error}
               loading={loading}
-              onBack={() => setStep(3)}
+              estimate={priceEstimate}
+              onBack={() => setStep(4)}
               onSubmit={submit}
             />
           )}
@@ -326,46 +454,68 @@ export default function InmobiliariaErikLanding() {
 // ============ Welcome ============
 function Welcome({ onStart }: { onStart: () => void }) {
   return (
-    <div className="animate-[fadeIn_400ms_ease-out] grid lg:grid-cols-[1fr_360px] gap-10 lg:gap-14 items-center">
+    <div className="animate-[fadeIn_400ms_ease-out] grid lg:grid-cols-[1fr_360px] gap-8 lg:gap-14 items-center">
       {/* Columna izquierda: copy + CTA */}
-      <div className="text-center lg:text-left order-2 lg:order-1">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#171717] border border-[#262626] mb-6">
+      <div className="text-center lg:text-left">
+        {/* Mobile-only: chip de agente compacto arriba */}
+        <div className="lg:hidden inline-flex items-center gap-3 px-3 py-2 rounded-full bg-[#171717] border border-[#262626] mb-5">
+          <div className="relative w-9 h-9 rounded-full overflow-hidden border border-[#3F3F46] shrink-0">
+            <Image
+              src="/erik.jpg"
+              alt="Erik"
+              fill
+              priority
+              sizes="36px"
+              className="object-cover"
+            />
+          </div>
+          <div className="flex items-center gap-2 pr-2">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
+            </span>
+            <span className="text-xs font-medium text-white">
+              Erik te atiende hoy
+            </span>
+          </div>
+        </div>
+
+        <div className="hidden lg:inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#171717] border border-[#262626] mb-6">
           <Sparkles className="w-3.5 h-3.5 text-[#D4A574]" />
           <span className="text-xs font-medium text-[#D4A574]">
             Valoración gratuita · sin compromiso
           </span>
         </div>
 
-        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight leading-[1.08] mb-5">
-          Compro tu{' '}
+        <h1 className="text-[28px] sm:text-4xl lg:text-5xl font-bold tracking-tight leading-[1.1] mb-4">
+          Calcula gratis cuánto vale tu{' '}
           <span className="bg-gradient-to-r from-[#D4A574] to-[#E5C28C] bg-clip-text text-transparent">
-            casa tal y como está
+            casa en Antequera
           </span>{' '}
-          en Antequera, Archidona, Bobadilla, Mollina, Humilladero y alrededores.
+          y comarca.
         </h1>
 
-        <p className="text-base sm:text-lg text-[#A1A1AA] mb-8 max-w-md mx-auto lg:mx-0 leading-relaxed">
-          No necesitas reformar nada, no pagas comisión y tú eliges cuándo
-          escriturar.
+        <p className="text-[15px] sm:text-lg text-[#A1A1AA] mb-7 max-w-md mx-auto lg:mx-0 leading-relaxed">
+          Resultado en 60 segundos. Sin dar tu teléfono. Sin compromiso.
         </p>
 
         <button
           onClick={onStart}
-          className="group inline-flex items-center gap-2 px-7 py-4 bg-[#D4A574] text-black rounded-xl font-semibold text-base hover:bg-[#E5C28C] transition shadow-[0_0_40px_rgba(212,165,116,0.25)]"
+          className="group inline-flex items-center gap-2 px-6 py-4 sm:px-7 bg-[#D4A574] text-black rounded-xl font-semibold text-base hover:bg-[#E5C28C] transition shadow-[0_0_40px_rgba(212,165,116,0.25)]"
         >
-          Quiero mi oferta en 24 horas
+          Calcular precio gratis
           <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
         </button>
 
-        <div className="mt-8 grid grid-cols-3 gap-2.5 max-w-md mx-auto lg:mx-0">
-          <Stat label="Sin compromiso" />
-          <Stat label="Respuesta 24 h" />
-          <Stat label="Oferta real" />
+        <div className="mt-7 grid grid-cols-3 gap-2 max-w-md mx-auto lg:mx-0">
+          <Stat label="60 segundos" />
+          <Stat label="Sin teléfono" />
+          <Stat label="100% gratis" />
         </div>
       </div>
 
-      {/* Columna derecha: tarjeta del agente */}
-      <div className="order-1 lg:order-2 mx-auto w-full max-w-[340px]">
+      {/* Columna derecha: tarjeta del agente — SOLO desktop */}
+      <div className="hidden lg:block mx-auto w-full max-w-[340px]">
         <div className="relative rounded-2xl bg-[#171717] border border-[#262626] p-5 shadow-[0_0_60px_rgba(212,165,116,0.08)]">
           {/* Foto */}
           <div className="relative w-full aspect-[4/5] rounded-xl overflow-hidden border border-[#3F3F46] bg-[#0A0A0A]">
@@ -374,10 +524,9 @@ function Welcome({ onStart }: { onStart: () => void }) {
               alt="Erik · Agente inmobiliario en Antequera"
               fill
               priority
-              sizes="(max-width: 1024px) 320px, 340px"
+              sizes="340px"
               className="object-cover"
             />
-            {/* Badge online */}
             <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/70 backdrop-blur-md border border-[#262626]">
               <span className="relative flex h-1.5 w-1.5">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
@@ -389,7 +538,6 @@ function Welcome({ onStart }: { onStart: () => void }) {
             </div>
           </div>
 
-          {/* Info agente */}
           <div className="mt-4 text-left">
             <p className="text-[11px] uppercase tracking-[0.14em] text-[#D4A574] font-semibold mb-1">
               Tu agente
@@ -398,10 +546,8 @@ function Welcome({ onStart }: { onStart: () => void }) {
               Antequera y Comarca
             </h3>
             <p className="text-sm text-[#A1A1AA] mt-1 leading-snug">
-              Te atiendo personalmente y te llamo en menos de 24 horas con tu oferta.
+              Te atiendo personalmente cuando recibas tu valoración.
             </p>
-
-            {/* Línea de confianza */}
             <div className="mt-4 flex items-center gap-2 pt-4 border-t border-[#262626]">
               <ShieldCheck className="w-4 h-4 text-[#D4A574] shrink-0" />
               <p className="text-xs text-[#A1A1AA]">
@@ -511,19 +657,275 @@ function StepCards({
   );
 }
 
-// ============ Step contacto (paso 4) ============
+// ============ Step 3: Detalles (m² + dormitorios + estado) ============
+function StepDetails({
+  m2,
+  dormitorios,
+  estado,
+  error,
+  calculating,
+  onChange,
+  onContinue,
+  onBack,
+}: {
+  m2: string;
+  dormitorios: string;
+  estado: string;
+  error: string | null;
+  calculating: boolean;
+  onChange: (k: 'm2' | 'dormitorios' | 'estado_propiedad', v: string) => void;
+  onContinue: () => void;
+  onBack: () => void;
+}) {
+  if (calculating) {
+    return (
+      <div className="animate-[fadeIn_300ms_ease-out] py-16 text-center">
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[#171717] border border-[#262626] mb-6">
+          <Loader2 className="w-7 h-7 text-[#D4A574] animate-spin" />
+        </div>
+        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mb-3">
+          Calculando tu valoración…
+        </h2>
+        <p className="text-[#A1A1AA] max-w-sm mx-auto">
+          Comparando con propiedades vendidas en tu zona.
+        </p>
+      </div>
+    );
+  }
+
+  const dormOpts = ['1', '2', '3', '4+'];
+
+  return (
+    <div className="animate-[slideIn_350ms_ease-out]">
+      <p className="text-xs font-semibold uppercase tracking-wider text-[#D4A574] mb-3">
+        Características
+      </p>
+      <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight mb-2 leading-tight">
+        Cuéntanos sobre tu propiedad
+      </h2>
+      <p className="text-[#A1A1AA] mb-7">
+        Para darte una valoración precisa.
+      </p>
+
+      <div className="space-y-6">
+        {/* m² */}
+        <div>
+          <label className="block text-xs font-semibold uppercase tracking-wider text-[#A1A1AA] mb-2">
+            Metros cuadrados (útiles)
+          </label>
+          <div className="relative">
+            <input
+              type="number"
+              inputMode="numeric"
+              value={m2}
+              onChange={(e) => onChange('m2', e.target.value)}
+              placeholder="Ej: 85"
+              min={20}
+              max={2000}
+              className="dark-input pr-14"
+            />
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-medium text-[#71717A]">
+              m²
+            </span>
+          </div>
+        </div>
+
+        {/* Dormitorios */}
+        <div>
+          <label className="block text-xs font-semibold uppercase tracking-wider text-[#A1A1AA] mb-2">
+            Dormitorios
+          </label>
+          <div className="grid grid-cols-4 gap-2">
+            {dormOpts.map((d) => {
+              const sel = dormitorios === d;
+              return (
+                <button
+                  key={d}
+                  type="button"
+                  onClick={() => onChange('dormitorios', d)}
+                  className={`py-3 rounded-xl border text-base font-semibold transition ${
+                    sel
+                      ? 'bg-[#D4A574] text-black border-[#D4A574]'
+                      : 'bg-[#171717] text-[#FAFAFA] border-[#262626] hover:border-[#3F3F46]'
+                  }`}
+                >
+                  {d}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Estado */}
+        <div>
+          <label className="block text-xs font-semibold uppercase tracking-wider text-[#A1A1AA] mb-2">
+            Estado de la propiedad
+          </label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {ESTADOS.map((opt) => {
+              const sel = estado === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => onChange('estado_propiedad', opt.value)}
+                  className={`flex items-center gap-3 text-left p-3.5 rounded-xl border transition ${
+                    sel
+                      ? 'bg-[#D4A574]/10 border-[#D4A574]'
+                      : 'bg-[#171717] border-[#262626] hover:border-[#3F3F46]'
+                  }`}
+                >
+                  <div
+                    className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
+                      sel ? 'bg-[#D4A574] text-black' : 'bg-[#262626] text-[#D4A574]'
+                    }`}
+                  >
+                    {opt.icon}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-semibold text-sm leading-tight">
+                      {opt.label}
+                    </p>
+                    {opt.hint && (
+                      <p className="text-xs text-[#A1A1AA] mt-0.5 leading-tight">
+                        {opt.hint}
+                      </p>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {error && (
+        <div className="mt-5 p-3 rounded-lg bg-red-950/40 border border-red-900/60 text-sm text-red-300">
+          {error}
+        </div>
+      )}
+
+      <button
+        onClick={onContinue}
+        className="mt-7 w-full inline-flex items-center justify-center gap-2 py-4 bg-[#D4A574] text-black rounded-xl font-semibold text-base hover:bg-[#E5C28C] transition shadow-[0_0_40px_rgba(212,165,116,0.25)]"
+      >
+        Ver mi valoración
+        <ArrowRight className="w-4 h-4" />
+      </button>
+
+      <button
+        onClick={onBack}
+        type="button"
+        className="mt-5 inline-flex items-center gap-2 text-sm text-[#A1A1AA] hover:text-white transition"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Atrás
+      </button>
+    </div>
+  );
+}
+
+// ============ Step 4: Valoración revelada ============
+function StepPrice({
+  tipo,
+  zona,
+  estimate,
+  onContinue,
+  onBack,
+}: {
+  tipo: string;
+  zona: string;
+  estimate: { low: number; high: number } | null;
+  onContinue: () => void;
+  onBack: () => void;
+}) {
+  const tipoLabel =
+    TIPOS.find((t) => t.value === tipo)?.label.toLowerCase() || 'propiedad';
+
+  return (
+    <div className="animate-[slideIn_350ms_ease-out]">
+      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 mb-5">
+        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+        <span className="text-xs font-medium text-emerald-300">
+          Valoración lista
+        </span>
+      </div>
+
+      <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight mb-2 leading-tight">
+        Tu {tipoLabel} en {zona} está valorada en
+      </h2>
+
+      <div className="my-6 p-6 sm:p-8 rounded-2xl bg-gradient-to-br from-[#1F1A14] via-[#171717] to-[#171717] border border-[#3F2D1F] relative overflow-hidden">
+        {/* glow */}
+        <div className="absolute -top-20 -right-20 w-60 h-60 bg-[#D4A574]/10 rounded-full blur-3xl" />
+        <div className="relative">
+          {estimate ? (
+            <>
+              <div className="flex items-baseline gap-2 flex-wrap">
+                <span className="text-3xl sm:text-5xl font-bold tracking-tight bg-gradient-to-r from-[#D4A574] to-[#E5C28C] bg-clip-text text-transparent">
+                  {formatEUR(estimate.low)}
+                </span>
+                <span className="text-xl sm:text-2xl text-[#A1A1AA]">
+                  –
+                </span>
+                <span className="text-3xl sm:text-5xl font-bold tracking-tight bg-gradient-to-r from-[#D4A574] to-[#E5C28C] bg-clip-text text-transparent">
+                  {formatEUR(estimate.high)}
+                </span>
+              </div>
+              <p className="text-xs sm:text-sm text-[#A1A1AA] mt-3">
+                Rango de valor de mercado orientativo, basado en operaciones recientes en la zona.
+              </p>
+            </>
+          ) : (
+            <p className="text-[#A1A1AA]">
+              No pudimos calcular el rango. Pasa al siguiente paso y Erik te dará una valoración personalizada.
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div className="p-4 rounded-xl bg-[#171717] border border-[#262626] mb-6">
+        <p className="text-sm text-[#FAFAFA] leading-relaxed">
+          <span className="text-[#D4A574] font-semibold">¿Quieres una oferta firme?</span>{' '}
+          Erik te llama en menos de 24 horas con un precio en efectivo, sin reformas y sin comisiones.
+        </p>
+      </div>
+
+      <button
+        onClick={onContinue}
+        className="w-full inline-flex items-center justify-center gap-2 py-4 bg-[#D4A574] text-black rounded-xl font-semibold text-base hover:bg-[#E5C28C] transition shadow-[0_0_40px_rgba(212,165,116,0.25)]"
+      >
+        Quiero mi oferta firme
+        <ArrowRight className="w-4 h-4" />
+      </button>
+
+      <button
+        onClick={onBack}
+        type="button"
+        className="mt-5 inline-flex items-center gap-2 text-sm text-[#A1A1AA] hover:text-white transition"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Atrás
+      </button>
+    </div>
+  );
+}
+
+// ============ Step contacto (paso 5) ============
 function StepContact({
   form,
   update,
   error,
   loading,
+  estimate,
   onBack,
   onSubmit,
 }: {
-  form: { nombre: string; telefono: string; tipo_vivienda: string; ubicacion: string; urgencia: string };
+  form: { nombre: string; telefono: string; tipo_vivienda: string; ubicacion: string; m2: string; dormitorios: string; estado_propiedad: string };
   update: (k: 'nombre' | 'telefono', v: string) => void;
   error: string | null;
   loading: boolean;
+  estimate: { low: number; high: number } | null;
   onBack: () => void;
   onSubmit: () => void;
 }) {
@@ -532,13 +934,29 @@ function StepContact({
       <p className="text-xs font-semibold uppercase tracking-wider text-[#D4A574] mb-3">
         Último paso
       </p>
-      <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-2 leading-tight">
+      <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight mb-2 leading-tight">
         ¿A dónde te llamamos?
       </h2>
-      <p className="text-[#A1A1AA] mb-8">
-        Te contactamos en menos de <strong className="text-white">24 horas</strong>{' '}
-        con una oferta real.
+      <p className="text-[#A1A1AA] mb-6">
+        Erik te contacta en menos de{' '}
+        <strong className="text-white">24 horas</strong> con tu oferta firme en efectivo.
       </p>
+
+      {estimate && (
+        <div className="mb-6 p-3.5 rounded-xl bg-[#D4A574]/[0.06] border border-[#D4A574]/25 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-[#D4A574]/15 flex items-center justify-center shrink-0">
+            <Sparkles className="w-4 h-4 text-[#D4A574]" />
+          </div>
+          <div>
+            <p className="text-[11px] uppercase tracking-wider text-[#D4A574] font-semibold">
+              Tu valoración estimada
+            </p>
+            <p className="text-sm font-semibold text-white">
+              {formatEUR(estimate.low)} – {formatEUR(estimate.high)}
+            </p>
+          </div>
+        </div>
+      )}
 
       <form
         onSubmit={(e) => {
