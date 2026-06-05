@@ -710,9 +710,12 @@ function StepDetails({
       <div className="space-y-6">
         {/* m² */}
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-[#A1A1AA] mb-2">
-            Metros cuadrados (útiles)
+          <label className="block text-sm font-semibold text-[#FAFAFA] mb-1">
+            ¿Cuántos metros tiene?
           </label>
+          <p className="text-xs text-[#A1A1AA] mb-2">
+            Aproximado, no hace falta exacto.
+          </p>
           <div className="relative">
             <input
               type="number"
@@ -732,8 +735,8 @@ function StepDetails({
 
         {/* Dormitorios */}
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-[#A1A1AA] mb-2">
-            Dormitorios
+          <label className="block text-sm font-semibold text-[#FAFAFA] mb-2">
+            ¿Cuántos dormitorios?
           </label>
           <div className="grid grid-cols-4 gap-2">
             {dormOpts.map((d) => {
@@ -758,8 +761,8 @@ function StepDetails({
 
         {/* Estado */}
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-[#A1A1AA] mb-2">
-            Estado de la propiedad
+          <label className="block text-sm font-semibold text-[#FAFAFA] mb-2">
+            ¿Cómo está la propiedad?
           </label>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {ESTADOS.map((opt) => {
