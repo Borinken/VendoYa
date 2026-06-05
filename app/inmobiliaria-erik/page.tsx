@@ -269,29 +269,24 @@ function Welcome({ onStart }: { onStart: () => void }) {
       </div>
 
       <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.05] mb-5">
-        Compramos tu{' '}
+        Compro tu{' '}
         <span className="bg-gradient-to-r from-[#D4A574] to-[#E5C28C] bg-clip-text text-transparent">
-          casa o piso
+          casa tal y como está
         </span>
         <br />
-        en Antequera y comarca
+        en Antequera, Archidona, Bobadilla, Mollina, Humilladero y alrededores.
       </h1>
 
-      <p className="text-sm sm:text-base text-[#71717A] mb-3 max-w-md mx-auto">
-        Antequera · Archidona · Bobadilla · Mollina · Humilladero · y alrededores
-      </p>
-
-      <p className="text-lg text-[#A1A1AA] mb-10 max-w-md mx-auto leading-relaxed">
-        La tomamos tal como está. Sin reformas. Pago rápido.
-        <br />
-        <span className="text-[#FAFAFA]">Descúbrelo en 30 segundos.</span>
+      <p className="text-base sm:text-lg text-[#A1A1AA] mb-10 max-w-md mx-auto leading-relaxed">
+        No necesitas reformar nada, no pagas comisión y tú eliges cuándo
+        escriturar.
       </p>
 
       <button
         onClick={onStart}
         className="group inline-flex items-center gap-2 px-7 py-4 bg-[#D4A574] text-black rounded-xl font-semibold text-base hover:bg-[#E5C28C] transition shadow-[0_0_40px_rgba(212,165,116,0.25)]"
       >
-        Enviar
+        Quiero mi oferta en 24 horas
         <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
       </button>
 
