@@ -283,12 +283,15 @@ export default function InmobiliariaErikLanding() {
           : null;
 
       const estado = form.estado_propiedad;
+      // Mapeo a valores aceptados por el backend: si_bastante | un_poco | no_mucho | esta_bien
       const necesita_reforma =
-        estado === 'nuevo' || estado === 'bueno'
+        estado === 'nuevo'
           ? 'esta_bien'
+          : estado === 'bueno'
+          ? 'no_mucho'
           : estado === 'a_reformar'
-          ? 'reforma_parcial'
-          : 'reforma_integral';
+          ? 'un_poco'
+          : 'si_bastante';
 
       const estimacionStr = priceEstimate
         ? `${formatEUR(priceEstimate.low)} – ${formatEUR(priceEstimate.high)}`
