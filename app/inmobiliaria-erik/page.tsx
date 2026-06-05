@@ -98,6 +98,63 @@ export default function InmobiliariaErikLanding() {
     telefono: '',
   });
 
+  // ===== Funnel tracking =====
+  const sessionIdRef = (() => {
+    if (typeof window === 'undefined') return { current: '' };
+    let id = sessionStorage.getItem('ie_session_id');
+    if (!id) {
+      id = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+      sessionStorage.setItem('ie_session_id', id);
+    }
+    return { current: id };
+  })();
+
+  const track = (stepKey: string) => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const payload = JSON.stringify({
+      session_id: sessionIdRef.current,
+      step: stepKey,
+      source: 'inmobiliaria-erik-landing',
+      utm_source: params.get('utm_source'),
+      utm_campaign: params.get('utm_campaign'),
+    });
+    // sendBeacon para no bloquear navegación al unload
+    try {
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon(
+          '/api/inmobiliaria-erik-funnel',
+          new Blob([payload], { type: 'application/json' })
+        );
+        return;
+      }
+    } catch {
+      /* noop */
+    }
+    fetch('/api/inmobiliaria-erik-funnel', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: payload,
+      keepalive: true,
+    }).catch(() => {});
+  };
+
+  // Track page_view + welcome_view al montar
+  useEffect(() => {
+    track('page_view');
+    track('welcome_view');
+    const onUnload = () => track('page_unload');
+    window.addEventListener('beforeunload', onUnload);
+    return () => window.removeEventListener('beforeunload', onUnload);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Track entrada al paso 4 (form de contacto)
+  useEffect(() => {
+    if (step === 4) track('step_4_contacto_view');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
+
   const update = (k: keyof typeof form, v: string) =>
     setForm((f) => ({ ...f, [k]: v }));
 
@@ -105,12 +162,17 @@ export default function InmobiliariaErikLanding() {
   const pickAndAdvance = (key: 'tipo_vivienda' | 'ubicacion' | 'urgencia', value: string, nextStep: Step) => {
     update(key, value);
     setError(null);
+    // Track inmediato del paso completado
+    if (key === 'tipo_vivienda') track('step_1_tipo');
+    else if (key === 'ubicacion') track('step_2_zona');
+    else if (key === 'urgencia') track('step_3_urgencia');
     // pequeño delay para que se vea el "selected" antes de pasar
     setTimeout(() => setStep(nextStep), 220);
   };
 
   const submit = async () => {
     setError(null);
+    track('step_4_contacto_submit_attempt');
     if (!form.nombre.trim() || !form.telefono.trim()) {
       setError('Por favor completa tu nombre y teléfono.');
       return;
@@ -140,8 +202,10 @@ export default function InmobiliariaErikLanding() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Error al enviar');
+      track('submit_success');
       setSuccess(true);
     } catch (err) {
+      track('submit_error');
       setError(err instanceof Error ? err.message : 'Error desconocido');
     } finally {
       setLoading(false);

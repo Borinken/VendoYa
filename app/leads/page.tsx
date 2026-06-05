@@ -264,6 +264,12 @@ export default function LeadsAdminPage() {
               Actualizar
             </button>
             <a
+              href="/leads/embudo"
+              className="inline-flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm hover:bg-gray-50"
+            >
+              📊 Embudo
+            </a>
+            <a
               href={`/api/inmobiliaria-erik-leads/export?key=${encodeURIComponent(
                 password
               )}`}
