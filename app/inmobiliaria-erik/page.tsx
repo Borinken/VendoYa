@@ -291,7 +291,7 @@ function Welcome({ onStart }: { onStart: () => void }) {
         onClick={onStart}
         className="group inline-flex items-center gap-2 px-7 py-4 bg-[#D4A574] text-black rounded-xl font-semibold text-base hover:bg-[#E5C28C] transition shadow-[0_0_40px_rgba(212,165,116,0.25)]"
       >
-        Empezar ahora
+        Enviar
         <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
       </button>
 
