@@ -842,13 +842,27 @@ function StepContact({
       <p className="text-xs font-semibold uppercase tracking-wider text-[#D4A574] mb-3">
         Último paso
       </p>
-      <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight mb-2 leading-tight">
-        ¿A dónde te llamamos?
-      </h2>
-      <p className="text-[#A1A1AA] mb-6">
-        Erik te contacta en menos de{' '}
-        <strong className="text-white">24 horas</strong> con tu oferta firme en efectivo.
-      </p>
+
+      {/* Cabecera con Erik visible */}
+      <div className="flex items-center gap-3 mb-5">
+        <div className="relative w-14 h-14 rounded-full overflow-hidden border-2 border-[#D4A574]/40 shrink-0">
+          <Image
+            src="/erik.jpg"
+            alt="Erik"
+            fill
+            sizes="56px"
+            className="object-cover"
+          />
+        </div>
+        <div>
+          <h2 className="text-xl sm:text-2xl font-bold tracking-tight leading-tight">
+            ¿A qué número te llama Erik?
+          </h2>
+          <p className="text-sm text-[#A1A1AA] mt-0.5">
+            Una llamada. Sin compromiso. Sin agobios.
+          </p>
+        </div>
+      </div>
 
       {estimate && (
         <div className="mb-6 p-3.5 rounded-xl bg-[#D4A574]/[0.06] border border-[#D4A574]/25 flex items-center gap-3">
@@ -914,12 +928,26 @@ function StepContact({
           </div>
         )}
 
-        <div className="flex items-start gap-2.5 p-3 rounded-lg bg-[#D4A574]/[0.06] border border-[#D4A574]/20">
-          <ShieldCheck className="w-4 h-4 text-[#D4A574] flex-shrink-0 mt-0.5" />
-          <p className="text-xs text-[#D4D4D8] leading-relaxed">
-            Te llamo <strong className="text-white">una sola vez</strong> para
-            darte la oferta. Sin agobios.
-          </p>
+        {/* 3 promesas en positivo */}
+        <div className="space-y-2 pt-1">
+          <div className="flex items-start gap-2.5">
+            <CheckCircle2 className="w-4 h-4 text-[#D4A574] shrink-0 mt-0.5" />
+            <p className="text-[13px] text-[#D4D4D8] leading-snug">
+              <strong className="text-white">Oferta firme en 24h</strong> — sin compromiso de venta
+            </p>
+          </div>
+          <div className="flex items-start gap-2.5">
+            <CheckCircle2 className="w-4 h-4 text-[#D4A574] shrink-0 mt-0.5" />
+            <p className="text-[13px] text-[#D4D4D8] leading-snug">
+              <strong className="text-white">Trato directo con Erik</strong> — no centralitas, no comerciales
+            </p>
+          </div>
+          <div className="flex items-start gap-2.5">
+            <CheckCircle2 className="w-4 h-4 text-[#D4A574] shrink-0 mt-0.5" />
+            <p className="text-[13px] text-[#D4D4D8] leading-snug">
+              <strong className="text-white">Una sola llamada</strong> — sin spam, sin newsletters
+            </p>
+          </div>
         </div>
 
         <button
@@ -934,14 +962,15 @@ function StepContact({
             </>
           ) : (
             <>
-              Recibir mi oferta
+              Quiero mi oferta de Erik
               <ArrowRight className="w-4 h-4" />
             </>
           )}
         </button>
 
-        <p className="text-xs text-[#71717A] text-center pt-2">
-          Al enviar aceptas que te contactemos. Tus datos están protegidos.
+        <p className="text-[11px] text-[#71717A] text-center pt-2 leading-relaxed">
+          <ShieldCheck className="inline w-3 h-3 mr-1 -mt-0.5" />
+          Tus datos son privados. No los compartimos con terceros.
         </p>
       </form>
 
