@@ -471,8 +471,9 @@ function HeroIntro() {
       <h1 className="text-[26px] sm:text-4xl font-bold tracking-tight leading-[1.12] mb-3 max-w-xl mx-auto">
         Calcula cuánto vale tu casa en{' '}
         <span className="bg-gradient-to-r from-[#D4A574] to-[#E5C28C] bg-clip-text text-transparent">
-          Antequera
-        </span>
+          Antequera, Archidona, Bobadilla, Humilladero
+        </span>{' '}
+        y alrededores
       </h1>
 
       <p className="text-[14px] sm:text-base text-[#A1A1AA] leading-relaxed">
