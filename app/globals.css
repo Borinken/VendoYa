@@ -63,3 +63,13 @@ body {
 .no-spin {
   -moz-appearance: textfield;
 }
+
+/* === Animaciones del funnel === */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}

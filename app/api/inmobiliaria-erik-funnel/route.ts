@@ -148,19 +148,18 @@ export async function GET(request: Request) {
 
     const stages = [
       { key: 'page_view', label: '1. Llega a la página' },
-      { key: 'welcome_view', label: '2. Ve el welcome' },
-      { key: 'cta_welcome_click', label: '3. Click "Calcular precio"' },
-      { key: 'step_1_tipo', label: '4. Elige tipo' },
-      { key: 'step_2_zona', label: '5. Elige zona' },
-      { key: 'step_3_details_complete', label: '6. Completa detalles' },
-      { key: 'step_4_price_continue', label: '7. Ve precio y avanza' },
-      { key: 'step_5_contacto_submit_attempt', label: '8. Click en enviar' },
-      { key: 'submit_success', label: '9. Lead enviado' },
+      { key: 'step_1_tipo', label: '2. Elige tipo' },
+      { key: 'step_2_zona', label: '3. Elige zona' },
+      { key: 'step_3_details_complete', label: '4. Completa detalles' },
+      { key: 'step_4_price_continue', label: '5. Ve precio y avanza' },
+      { key: 'step_5_contacto_submit_attempt', label: '6. Click en enviar' },
+      { key: 'submit_success', label: '7. Lead enviado' },
     ];
 
     const totalSessions = Object.keys(reached).length;
-    const funnel = stages.map((stage, idx) => {
-      const count = Object.values(reached).filter((v) => v >= idx).length;
+    const funnel = stages.map((stage) => {
+      const threshold = STEP_ORDER[stage.key];
+      const count = Object.values(reached).filter((v) => v >= threshold).length;
       return {
         step: stage.key,
         label: stage.label,

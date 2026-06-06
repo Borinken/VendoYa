@@ -28,7 +28,7 @@ import {
 // accent:    #D4A574 (dorado cobre)
 // accent-h:  #C29560
 
-type Step = 0 | 1 | 2 | 3 | 4 | 5;
+type Step = 1 | 2 | 3 | 4 | 5;
 
 interface Option {
   value: string;
@@ -135,7 +135,7 @@ const ESTADO_LABELS: Record<string, string> = Object.fromEntries(
 );
 
 export default function InmobiliariaErikLanding() {
-  const [step, setStep] = useState<Step>(0);
+  const [step, setStep] = useState<Step>(1);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -201,7 +201,7 @@ export default function InmobiliariaErikLanding() {
     }).catch(() => {});
   };
 
-  // Track page_view + welcome_view al montar
+  // Track page_view al montar (welcome_view se mantiene por compatibilidad histórica)
   useEffect(() => {
     track('page_view');
     track('welcome_view');
@@ -235,12 +235,6 @@ export default function InmobiliariaErikLanding() {
     if (key === 'tipo_vivienda') track('step_1_tipo');
     else if (key === 'ubicacion') track('step_2_zona');
     setTimeout(() => setStep(nextStep), 220);
-  };
-
-  // CTA del welcome → paso 1
-  const startFunnel = () => {
-    track('cta_welcome_click');
-    setStep(1);
   };
 
   // Continuar desde detalles → mostrar valoración
@@ -332,11 +326,8 @@ export default function InmobiliariaErikLanding() {
     }
   };
 
-  // % de progreso (0 en welcome, 5 pasos después)
-  const progress = useMemo(() => {
-    if (step === 0) return 0;
-    return step * 20;
-  }, [step]);
+  // % de progreso (5 pasos)
+  const progress = useMemo(() => step * 20, [step]);
 
   if (success) return <SuccessScreen nombre={form.nombre} />;
 
@@ -365,37 +356,34 @@ export default function InmobiliariaErikLanding() {
               Antequera y Comarca
             </p>
           </div>
-          {step > 0 && (
-            <span className="text-xs font-medium text-[#A1A1AA]">
-              Paso {step} de 5
-            </span>
-          )}
+          <span className="text-xs font-medium text-[#A1A1AA]">
+            Paso {step} de 5
+          </span>
         </div>
         {/* Barra de progreso */}
-        {step > 0 && (
-          <div className="h-1 bg-[#171717]">
-            <div
-              className="h-full bg-gradient-to-r from-[#D4A574] to-[#E5C28C] transition-[width] duration-500 ease-out"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-        )}
+        <div className="h-1 bg-[#171717]">
+          <div
+            className="h-full bg-gradient-to-r from-[#D4A574] to-[#E5C28C] transition-[width] duration-500 ease-out"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
       </header>
 
       {/* Main */}
-      <main className="flex-1 flex items-center justify-center px-4 sm:px-6 py-10">
-        <div className={`w-full ${step === 0 ? 'max-w-5xl' : 'max-w-2xl'}`}>
-          {step === 0 && <Welcome onStart={startFunnel} />}
-
+      <main className="flex-1 flex items-start justify-center px-4 sm:px-6 py-8 sm:py-10">
+        <div className="w-full max-w-2xl">
           {step === 1 && (
-            <StepCards
-              eyebrow="Sobre tu propiedad"
-              title="¿Qué tipo de propiedad quieres valorar?"
-              subtitle="Selecciona una opción"
-              options={TIPOS}
-              selected={form.tipo_vivienda}
-              onSelect={(v) => pickAndAdvance('tipo_vivienda', v, 2)}
-            />
+            <>
+              <HeroIntro />
+              <StepCards
+                eyebrow="Sobre tu propiedad"
+                title="¿Qué tipo de propiedad quieres valorar?"
+                subtitle="Selecciona una opción"
+                options={TIPOS}
+                selected={form.tipo_vivienda}
+                onSelect={(v) => pickAndAdvance('tipo_vivienda', v, 2)}
+              />
+            </>
           )}
 
           {step === 2 && (
@@ -455,130 +443,41 @@ export default function InmobiliariaErikLanding() {
 }
 
 // ============ Welcome ============
-function Welcome({ onStart }: { onStart: () => void }) {
+// ============ Hero compacto sobre el paso 1 ============
+function HeroIntro() {
   return (
-    <div className="animate-[fadeIn_400ms_ease-out] grid lg:grid-cols-[1fr_360px] gap-8 lg:gap-14 items-center">
-      {/* Columna izquierda: copy + CTA */}
-      <div className="text-center lg:text-left">
-        {/* Mobile-only: chip de agente compacto arriba */}
-        <div className="lg:hidden inline-flex items-center gap-3 px-3 py-2 rounded-full bg-[#171717] border border-[#262626] mb-5">
-          <div className="relative w-9 h-9 rounded-full overflow-hidden border border-[#3F3F46] shrink-0">
-            <Image
-              src="/erik.jpg"
-              alt="Erik"
-              fill
-              priority
-              sizes="36px"
-              className="object-cover"
-            />
-          </div>
-          <div className="flex items-center gap-2 pr-2">
-            <span className="relative flex h-1.5 w-1.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
-            </span>
-            <span className="text-xs font-medium text-white">
-              Erik te atiende hoy
-            </span>
-          </div>
+    <div className="text-center mb-7 sm:mb-9 animate-[fadeIn_400ms_ease-out]">
+      {/* Chip de Erik */}
+      <div className="inline-flex items-center gap-2.5 pl-1 pr-3 py-1 rounded-full bg-[#171717] border border-[#262626] mb-5">
+        <div className="relative w-7 h-7 rounded-full overflow-hidden border border-[#3F3F46] shrink-0">
+          <Image
+            src="/erik.jpg"
+            alt="Erik"
+            fill
+            priority
+            sizes="28px"
+            className="object-cover"
+          />
         </div>
-
-        <div className="hidden lg:inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#171717] border border-[#262626] mb-6">
-          <Sparkles className="w-3.5 h-3.5 text-[#D4A574]" />
-          <span className="text-xs font-medium text-[#D4A574]">
-            Valoración gratuita · sin compromiso
-          </span>
-        </div>
-
-        <h1 className="text-[28px] sm:text-4xl lg:text-5xl font-bold tracking-tight leading-[1.1] mb-4">
-          Calcula gratis cuánto vale tu{' '}
-          <span className="bg-gradient-to-r from-[#D4A574] to-[#E5C28C] bg-clip-text text-transparent">
-            casa en Antequera
-          </span>{' '}
-          y comarca.
-        </h1>
-
-        <p className="text-[15px] sm:text-lg text-[#A1A1AA] mb-7 max-w-md mx-auto lg:mx-0 leading-relaxed">
-          Resultado en 60 segundos. Sin dar tu teléfono. Sin compromiso.
-        </p>
-
-        <button
-          onClick={onStart}
-          className="group inline-flex items-center gap-2 px-6 py-4 sm:px-7 bg-[#D4A574] text-black rounded-xl font-semibold text-base hover:bg-[#E5C28C] transition shadow-[0_0_40px_rgba(212,165,116,0.25)]"
-        >
-          Calcular precio gratis
-          <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-        </button>
-
-        <div className="mt-7 grid grid-cols-3 gap-2 max-w-md mx-auto lg:mx-0">
-          <Stat label="60 segundos" />
-          <Stat label="Sin teléfono" />
-          <Stat label="100% gratis" />
-        </div>
+        <span className="relative flex h-1.5 w-1.5">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
+        </span>
+        <span className="text-xs font-medium text-white">
+          Erik te atiende hoy
+        </span>
       </div>
 
-      {/* Columna derecha: tarjeta del agente — SOLO desktop */}
-      <div className="hidden lg:block mx-auto w-full max-w-[340px]">
-        <div className="relative rounded-2xl bg-[#171717] border border-[#262626] p-5 shadow-[0_0_60px_rgba(212,165,116,0.08)]">
-          {/* Foto */}
-          <div className="relative w-full aspect-[4/5] rounded-xl overflow-hidden border border-[#3F3F46] bg-[#0A0A0A]">
-            <Image
-              src="/erik.jpg"
-              alt="Erik · Agente inmobiliario en Antequera"
-              fill
-              priority
-              sizes="340px"
-              className="object-cover"
-            />
-            <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/70 backdrop-blur-md border border-[#262626]">
-              <span className="relative flex h-1.5 w-1.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
-              </span>
-              <span className="text-[10px] font-medium text-white tracking-wide">
-                Disponible hoy
-              </span>
-            </div>
-          </div>
+      <h1 className="text-[26px] sm:text-4xl font-bold tracking-tight leading-[1.12] mb-3 max-w-xl mx-auto">
+        Calcula cuánto vale tu casa en{' '}
+        <span className="bg-gradient-to-r from-[#D4A574] to-[#E5C28C] bg-clip-text text-transparent">
+          Antequera
+        </span>
+      </h1>
 
-          <div className="mt-4 text-left">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#D4A574] font-semibold mb-1">
-              Tu agente
-            </p>
-            <h3 className="text-lg font-semibold text-[#FAFAFA] leading-tight">
-              Antequera y Comarca
-            </h3>
-            <p className="text-sm text-[#A1A1AA] mt-1 leading-snug">
-              Te atiendo personalmente cuando recibas tu valoración.
-            </p>
-            <div className="mt-4 flex items-center gap-2 pt-4 border-t border-[#262626]">
-              <ShieldCheck className="w-4 h-4 text-[#D4A574] shrink-0" />
-              <p className="text-xs text-[#A1A1AA]">
-                Trato directo, sin intermediarios.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <style jsx global>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(8px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes slideIn {
-          from { opacity: 0; transform: translateX(20px); }
-          to   { opacity: 1; transform: translateX(0); }
-        }
-      `}</style>
-    </div>
-  );
-}
-
-function Stat({ label }: { label: string }) {
-  return (
-    <div className="px-3 py-2 rounded-lg bg-[#171717] border border-[#262626]">
-      <p className="text-xs font-medium text-[#A1A1AA]">{label}</p>
+      <p className="text-[14px] sm:text-base text-[#A1A1AA] leading-relaxed">
+        Resultado en 60 segundos · Sin dar tu teléfono · 100% gratis
+      </p>
     </div>
   );
 }
