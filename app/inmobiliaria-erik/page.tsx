@@ -377,8 +377,8 @@ export default function InmobiliariaErikLanding() {
               <HeroIntro />
               <StepCards
                 eyebrow="Sobre tu propiedad"
-                title="¿Qué tipo de propiedad quieres valorar?"
-                subtitle="Selecciona una opción"
+                title="¿Qué tipo de propiedad te interesa vender?"
+                subtitle="La valoramos en 60 segundos"
                 options={TIPOS}
                 selected={form.tipo_vivienda}
                 onSelect={(v) => pickAndAdvance('tipo_vivienda', v, 2)}
