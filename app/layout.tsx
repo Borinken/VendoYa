@@ -15,8 +15,8 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: 'Vendoya CRM - Software para Agencias Inmobiliarias',
-  description: 'CRM completo para agencias inmobiliarias. Gestiona propiedades, clientes, contratos y genera más negocio con captación automática.',
+  title: 'Vendoya.es - Agente personal de venta de propiedades sin inmobiliaria',
+  description: 'Vende tu propiedad solo, sin contrato exclusivo. Pago seguro con Stripe, soporte legal y notarial, y venta directa en Vendoya.es.',
 };
 
 export default function RootLayout({
@@ -27,7 +27,7 @@ export default function RootLayout({
   const clarityId = process.env.NEXT_PUBLIC_CLARITY_ID;
 
   return (
-    <html lang="en">
+    <html lang="es">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
