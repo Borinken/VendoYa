@@ -1,108 +1,148 @@
-# 🏠 Vendoya CRM - CRM Inmobiliario
+# VendoYa
 
-Sistema CRM completo para agencias inmobiliarias desarrollado con Next.js 14, TypeScript, Tailwind CSS y Supabase.
+A lead-acquisition and CRM platform for small real estate agencies in Spain.
 
-## 🚀 Características
+Agencies in the Antequera region were losing listings because owner enquiries
+arrived across three disconnected channels — a web form, WhatsApp, and a Gmail
+inbox — and nobody followed up past the first day. VendoYa unifies capture,
+scores the lead, and runs the follow-up sequence automatically.
 
-- ✅ **Gestión de Propiedades** - CRUD completo de inmuebles
-- ✅ **Gestión de Contactos** - Leads, propietarios, compradores, inquilinos
-- ✅ **Contratos** - Generación y gestión de contratos
-- ✅ **Alquileres** - Gestión integral de alquileres activos
-- ✅ **Dashboard** - Estadísticas y métricas en tiempo real
-- ✅ **Responsive** - Diseño adaptado a móvil, tablet y desktop
+Built for a working agency and deployed on Vercel.
 
-## 📋 Requisitos Previos
+---
 
-- Node.js 18+ instalado
-- Cuenta de Supabase (gratis en https://supabase.com)
-- Cuenta de Vercel (gratis en https://vercel.com)
+## What it does
 
-## 🛠️ Instalación y Configuración
+**Lead capture.** A multi-step funnel collects property details and gives the
+owner an instant valuation before asking for a phone number. Asking for contact
+details last, after the visitor has received something of value, cut abandonment
+sharply — the original design gated the funnel behind a welcome screen and lost
+most visitors there.
 
-### 1. Clonar e instalar dependencias
+**Automated follow-up.** Leads enter a scheduled sequence (day 1, 3, 7) delivered
+over WhatsApp and email. A cron endpoint drains the queue every 15 minutes.
+
+**Inbox ingestion.** Connects to the agency's Gmail over OAuth, parses incoming
+enquiries from listing portals, and creates leads without manual entry.
+
+**Property management.** CRUD for listings, contacts, contracts and rentals, plus
+3D tour hosting via Polycam webhooks and a Three.js viewer.
+
+**Investment analysis.** Scores a property against configurable criteria using an
+LLM, with a deterministic per-city fallback so the feature degrades instead of
+failing when the API is unavailable.
+
+---
+
+## Architecture
+
+```
+Browser ──► Next.js App Router (Vercel)
+              │
+              ├─ /api/leads          lead CRUD + interaction log
+              ├─ /api/email/*        Gmail OAuth, sync, parse
+              ├─ /api/scraping/*     portal ingestion (Puppeteer)
+              ├─ /api/investment     LLM scoring + city fallback
+              ├─ /api/stripe/*       checkout + webhook
+              └─ /api/cron/*         queue drain, property sync
+              │
+              ▼
+          Supabase (Postgres + RLS)
+              ▲
+              │
+   GitHub Actions ── 15-min schedule ──┘
+```
+
+### Decisions worth explaining
+
+**Scheduling runs on GitHub Actions, not Vercel Cron.** The Vercel Hobby plan
+caps cron jobs at one per day, which is useless for a follow-up queue. A
+scheduled workflow hitting an authenticated endpoint gives 15-minute granularity
+at no cost. The endpoint is guarded by a shared secret rather than left open.
+
+**Third-party credentials are encrypted at rest.** Agencies connect their own
+Gmail and Twilio accounts, so the database holds tokens belonging to someone
+else's business. `lib/encryption.ts` wraps them before they reach Postgres;
+Supabase RLS scopes every row to its owning agency.
+
+**Portal ingestion is isolated and degradable.** `/api/scraping` has `scrape`,
+`scrape-real` and `scrape-mock` variants so the rest of the system can be
+developed and demoed without depending on a live portal session or getting the
+IP blocked. `lib/anti-detection.ts` handles pacing and fingerprinting.
+
+**The valuation model fails soft.** If the LLM call errors or times out, the
+funnel falls back to a per-city price table rather than showing an error. A lead
+mid-funnel is worth more than a precise number.
+
+---
+
+## Stack
+
+| Layer | Choice |
+|---|---|
+| Framework | Next.js 14 (App Router), TypeScript |
+| Database | Supabase (Postgres, RLS, Storage) |
+| Styling | Tailwind CSS |
+| Payments | Stripe (checkout + webhooks) |
+| Messaging | Twilio WhatsApp Business API, Gmail API |
+| Scraping | Puppeteer, Cheerio |
+| 3D | Three.js, React Three Fiber, Polycam |
+| Validation | Zod, React Hook Form |
+| Scheduling | GitHub Actions |
+| Hosting | Vercel |
+
+---
+
+## Running locally
 
 ```bash
-cd vendoya-crm
 npm install
+cp .env.example .env.local
 ```
 
-### 2. Configurar Supabase
-
-1. Ve a https://supabase.com y crea un nuevo proyecto
-2. En el panel de Supabase, ve a **SQL Editor**
-3. Copia y pega el contenido de `supabase-schema.sql`
-4. Ejecuta el script para crear todas las tablas
-
-5. Obtén tus credenciales:
-   - Ve a **Settings** > **API**
-   - Copia `URL` y `anon public` key
-
-### 3. Configurar variables de entorno
-
-Edita el archivo `.env.local` con tus credenciales:
+Fill `.env.local` with your own credentials, then apply the schema:
 
 ```bash
-# Reemplaza con tus credenciales reales de Supabase
-NEXT_PUBLIC_SUPABASE_URL=https://tu-proyecto.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=tu-anon-key
-
-# URL de la aplicación
-NEXT_PUBLIC_APP_URL=http://localhost:3000
+supabase db push
 ```
 
-### 4. Ejecutar en desarrollo
+`supabase/migrations/` holds the full schema. Start the dev server:
 
 ```bash
 npm run dev
 ```
 
-Abre http://localhost:3000 en tu navegador.
-
-## 🌐 Desplegar en Vercel con dominio vendoya.es
-
-### Desde la terminal:
-
-```bash
-# 1. Login en Vercel
-vercel login
-
-# 2. Desplegar
-vercel --prod
-
-# 3. Configurar dominio
-vercel alias set <url-deployment> vendoya.es
-```
-
-## 📁 Estructura del Proyecto
-
-```
-vendoya-crm/
-├── app/
-│   ├── dashboard/              # Dashboard principal
-│   │   ├── page.tsx           # Página principal con stats
-│   │   └── layout.tsx         # Layout con sidebar
-│   ├── api/                   # API routes
-│   └── page.tsx               # Redirect a dashboard
-├── components/
-│   ├── Sidebar.tsx            # Sidebar de navegación
-│   └── ui/                    # Componentes UI reutilizables
-├── lib/
-│   ├── supabase.ts            # Cliente de Supabase + tipos
-│   └── utils.ts               # Utilidades
-└── supabase-schema.sql        # Schema de base de datos
-```
-
-## 🗄️ Base de Datos (Supabase)
-
-El schema incluye: agencies, users, contacts, properties, contracts, rentals, incidents, activities, capture_filters, captured_properties
-
-## 🎨 Tecnologías
-
-- Next.js 14 + TypeScript
-- Tailwind CSS
-- Supabase (PostgreSQL)
-- Vercel
+Required environment variables are documented in `.env.example`. The app starts
+without the optional integrations (Twilio, Gmail, Stripe) — those features
+report as unconfigured rather than crashing.
 
 ---
 
-Desarrollado con ❤️ para revolucionar el mercado inmobiliario español
+## Project structure
+
+```
+app/
+  api/            31 route handlers
+  (pages)/        dashboard, funnel, lead views
+components/       shared UI
+lib/              integrations: supabase, stripe, gmail, whatsapp,
+                  encryption, investment-analyzer, anti-detection
+supabase/
+  migrations/     schema
+scripts/
+  db/             one-off migration and inspection helpers
+  dev/            local verification scripts
+docs/             architecture and feature notes
+```
+
+---
+
+## Status
+
+Deployed and in use by one agency. Multi-tenant support and Supabase Auth are
+in place; billing is wired but the pricing model is still being validated with
+real customers before the self-service tier opens.
+
+## License
+
+MIT — see [LICENSE](LICENSE).

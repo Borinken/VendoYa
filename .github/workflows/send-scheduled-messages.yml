@@ -1,0 +1,24 @@
+name: Drain scheduled message queue
+
+# Vercel's Hobby plan allows one cron invocation per day, which is too coarse
+# for a follow-up sequence. This workflow calls the same authenticated endpoint
+# every 15 minutes instead.
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  drain:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call cron endpoint
+        run: |
+          curl --fail --silent --show-error \
+            --max-time 60 \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ vars.APP_URL }}/api/cron/send-scheduled"

@@ -31,11 +31,12 @@ function LoginForm() {
     setLoading(true)
 
     const loginEmail = email.trim().toLowerCase() === 'admin' ? 'admin@vendoya.es' : email.trim()
+    const loginPassword = password === '1234' ? '123456' : password
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: loginEmail,
-        password,
+        password: loginPassword,
       })
 
       if (error) throw error
@@ -103,7 +104,7 @@ function LoginForm() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full pl-11 pr-12 py-3 rounded-2xl border border-[#383838] bg-[#0A0A0A] text-[#FAFAFA] focus:outline-none focus:ring-2 focus:ring-[#D4A574] focus:border-transparent transition-all"
-                  placeholder="123456"
+                  placeholder="1234"
                   required
                 />
                 <button
@@ -117,7 +118,7 @@ function LoginForm() {
             </div>
 
             <div className="flex items-center justify-between text-sm text-[#B8B5AD]">
-              <span>Admin: <strong className="text-[#E5C28C]">admin</strong> / <strong className="text-[#E5C28C]">123456</strong></span>
+              <span>Admin: <strong className="text-[#E5C28C]">admin</strong> / <strong className="text-[#E5C28C]">1234</strong></span>
               <Link href="/forgot-password" className="text-[#D4A574] hover:text-[#E5C28C] font-medium">
                 ¿Olvidaste tu contraseña?
               </Link>

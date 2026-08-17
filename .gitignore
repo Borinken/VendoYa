@@ -34,3 +34,13 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# secrets — never commit
+.env
+.env.*
+!.env.example
+
+# local scratch
+*.log
+scraper-local/
+github-scraper/
