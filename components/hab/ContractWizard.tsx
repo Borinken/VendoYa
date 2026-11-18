@@ -240,9 +240,9 @@ export function ContractWizard({ base, onClose }: { base?: Contract; onClose: ()
     <div className="h-rise">
       <button className="h-btn quiet sm" onClick={onClose}><ArrowLeft size={16} aria-hidden /> Volver a contratos</button>
       <h1 style={{ margin: '.75rem 0 .5rem' }}>Nuevo contrato</h1><p><strong>Paso {step + 1} de {STEPS.length}</strong> · {STEPS[step]}</p><p className="muted small">Se guarda solo como borrador en este dispositivo.</p>
-      <div role="status" className={`h-notice ${total ? '' : 'ok'}`} style={{ margin: '1rem 0', position: 'sticky', top: 40, zIndex: 5, background: 'var(--h-surface)' }}>
-        {total ? <>Faltan {total} campos obligatorios. <button className="h-btn sm quiet" onClick={() => { setShowErr(true) }}>Marcar los que faltan</button></> : 'Todos los campos obligatorios están completos.'}
-        {showErr && missing.length > 0 && <ul className="small" style={{ margin: '.4rem 0 0', paddingLeft: '1.1rem' }}>{missing.slice(0, 6).map(m => <li key={m.path}>{m.message}</li>)}{missing.length > 6 && <li>…y {missing.length - 6} más</li>}</ul>}
+      <div role="status" className={`h-notice ${total ? '' : 'ok'}`} style={{ margin: '1rem 0', position: 'sticky', top: 'calc(var(--h-banner-h) + 4px)', zIndex: 5, background: 'var(--h-surface)' }}>
+        {total ? <>Faltan {total} campos obligatorios. <button className="h-btn sm quiet" style={{ paddingLeft: 0, textDecoration: 'underline' }} onClick={() => { setShowErr(true) }}>Marcar los que faltan</button></> : 'Todos los campos obligatorios están completos.'}
+        {showErr && missing.length > 0 && <ul className="small" style={{ margin: '.4rem 0 0', paddingLeft: '1.1rem', listStyle: 'disc', maxHeight: '22vh', overflowY: 'auto' }}>{missing.slice(0, 6).map(m => <li key={m.path}>{m.message}</li>)}{missing.length > 6 && <li>…y {missing.length - 6} más</li>}</ul>}
       </div>
       <nav aria-label="Pasos" className="h-steps">{STEPS.map((t, i) => <button key={t} className={i < step ? 'done' : ''} aria-current={i === step ? 'step' : undefined} aria-label={`${i + 1}. ${t}`} title={t} onClick={() => setS({ ...s, step: i })} />)}</nav>
       <section className="h-panel">{stepBody[step]}</section>

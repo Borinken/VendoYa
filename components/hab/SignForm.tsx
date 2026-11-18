@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import { Download, MessageCircle, Share2 } from 'lucide-react'
-import { demoDownloadUrl, demoSignInfo, demoSignPdfUrl, demoSignSubmit } from '@/lib/hab/demo-repo'
+import { demoDownloadUrl, demoSeedSign, demoSignInfo, demoSignPdfUrl, demoSignSubmit } from '@/lib/hab/demo-repo'
 import { isDemo } from '@/lib/hab/env'
 import { SIGN_CONSENT_TEXT, SIGN_LAWYER_NOTE, SIGN_LEGAL_TEXT } from '@/lib/hab/seal-pdf'
 import { signInput, type SignInfo, type SignResult } from '@/lib/hab/types'
@@ -14,7 +14,7 @@ export function SignForm({ token }: { token: string }) {
   const [info, setInfo] = useState<SignInfo | null | undefined>(undefined); const [name, setName] = useState(''); const [consent, setConsent] = useState(false); const [code, setCode] = useState('')
   const [codeSent, setCodeSent] = useState(false); const [err, setErr] = useState(''); const [busy, setBusy] = useState(false); const [res, setRes] = useState<SignResult | null>(null); const [drawn, setDrawn] = useState(false)
   const cv = useRef<HTMLCanvasElement>(null); const last = useRef<{ x: number; y: number } | null>(null); const pts = useRef(0)
-  useEffect(() => { (async () => { const i = demo ? demoSignInfo(token) : await fetch(`/habitaciones/f/${token}/api`, { cache: 'no-store' }).then(r => (r.ok ? r.json() : null)); setInfo(i); if (i?.signer_name) setName(i.signer_name) })() }, [token, demo])
+  useEffect(() => { (async () => { if (demo) await demoSeedSign(token); const i = demo ? demoSignInfo(token) : await fetch(`/habitaciones/f/${token}/api`, { cache: 'no-store' }).then(r => (r.ok ? r.json() : null)); setInfo(i); if (i?.signer_name) setName(i.signer_name) })() }, [token, demo])
 
   const pos = (e: React.PointerEvent) => { const r = cv.current!.getBoundingClientRect(); return { x: ((e.clientX - r.left) / r.width) * cv.current!.width, y: ((e.clientY - r.top) / r.height) * cv.current!.height } }
   const down = (e: React.PointerEvent) => { cv.current!.setPointerCapture(e.pointerId); last.current = pos(e) }
@@ -71,7 +71,7 @@ export function SignForm({ token }: { token: string }) {
         <div><p className="muted small" style={{ marginBottom: '.4rem' }}>Dibuja tu firma con el dedo o el ratón *</p>
           <canvas ref={cv} width={600} height={220} aria-label="Zona para dibujar la firma" onPointerDown={down} onPointerMove={move} onPointerUp={() => { last.current = null }} onPointerCancel={() => { last.current = null }}
             style={{ width: '100%', height: 150, background: '#fff', borderRadius: 12, touchAction: 'none', border: '1px solid var(--h-line)' }} />
-          <button type="button" className="h-btn sm quiet" onClick={clear}>Borrar firma</button></div>
+          <button type="button" className="h-btn sm quiet" style={{ paddingLeft: 0 }} onClick={clear}>Borrar firma</button></div>
         {info.mail_enabled && <div style={{ display: 'grid', gap: '.5rem' }}><button type="button" className="h-btn sm" style={{ width: 'fit-content' }} disabled={busy} onClick={sendCode}>{codeSent ? 'Reenviar código' : 'Enviar código a mi email'}</button>
           <TextField label="Código de 6 dígitos" value={code} onChange={setCode} /></div>}
         {err && <p role="alert" style={{ color: 'var(--h-bad)' }}>{err}</p>}

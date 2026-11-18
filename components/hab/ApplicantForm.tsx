@@ -112,7 +112,7 @@ export function ApplicantForm({ token }: { token: string }) {
       <h1 style={{ margin: '.4rem 0' }}>{STEPS[step]}</h1><p className="muted">Paso {step + 1} de {STEPS.length}. Puedes guardar un borrador y volver con este mismo enlace.</p>
       <section className="h-panel" style={{ marginTop: '1.25rem' }}>{body[step]}</section>
       {err && <p role="alert" style={{ color: 'var(--h-bad)', marginTop: '.75rem' }}>{err}</p>}{saved && !err && <p role="status" className="muted small" style={{ marginTop: '.75rem' }}>Borrador guardado.</p>}
-      <div className="flex justify-between gap-2" style={{ marginTop: '1rem' }}>
+      <div className="flex flex-wrap justify-between gap-2" style={{ marginTop: '1rem' }}>
         <button className="h-btn" disabled={step === 0} onClick={() => setStep(step - 1)}>Anterior</button>
         <button className="h-btn" disabled={busy} onClick={() => post(false)}>Guardar borrador</button>
         {step < STEPS.length - 1 && <button className="h-btn primary" onClick={() => setStep(step + 1)}>Siguiente</button>}

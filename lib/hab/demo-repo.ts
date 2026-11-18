@@ -791,3 +791,16 @@ export async function demoSamplePdf(contractId: string, repo: { upload(b: 'hab-d
   p.drawText('Contrato de ejemplo (demo)', { x: 56, y: 760, size: 18, font: f }); p.drawText('Documento de prueba para la firma electronica simple.', { x: 56, y: 730, size: 11, font: f })
   const bytes = await doc.save(); const path = await repo.upload('hab-docs', new File([bytes.buffer as ArrayBuffer], 'contrato-demo.pdf', { type: 'application/pdf' })); await repo.setContractSharedPdf(contractId, path)
 }
+
+// Solo demo: crea (una vez) una solicitud de firma con PDF de ejemplo para ver /habitaciones/f/demo-firma.
+export async function demoSeedSign(token: string) {
+  if (token !== 'demo-firma') return
+  const db = demoDb(); if (db.signReqs.some(r => r.token_hash === token)) return
+  const c = db.contracts.find(x => x.id === 'c1')!
+  const { PDFDocument, StandardFonts } = await import('pdf-lib'); const doc = await PDFDocument.create(); const p = doc.addPage([595, 842]); const f = await doc.embedFont(StandardFonts.Helvetica)
+  p.drawText('Contrato de ejemplo (demo)', { x: 56, y: 760, size: 18, font: f }); p.drawText('Documento de prueba para la firma electronica simple.', { x: 56, y: 730, size: 11, font: f })
+  const path = `${c.org_id}/contracts/${c.id}/demo-firma.pdf`; const files = JSON.parse(window.localStorage.getItem(FILES) ?? '{}'); files[path] = bytesDataUrl(await doc.save(), 'application/pdf')
+  window.localStorage.setItem(FILES, JSON.stringify(files)); c.shared_pdf_path = path
+  db.signReqs.push({ id: uid(), contract_id: c.id, org_id: c.org_id, role: 'tenant', signer_name: 'Lucía Moreno', signer_email: 'lucia@demo.local', token_hash: token, expires_at: format(addDays(new Date(), 7), "yyyy-MM-dd'T'HH:mm:ss'Z'"), used_at: null, revoked_at: null, created_at: new Date().toISOString() })
+  window.localStorage.setItem(KEY, JSON.stringify(db))
+}
