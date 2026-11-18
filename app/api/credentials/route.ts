@@ -2,13 +2,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { encrypt } from '@/lib/encryption'
 
-const supabase = createClient(
+// Cliente creado al usar el endpoint (no al importar el módulo) para que `next build` no falle sin variables de entorno.
+const getSupabase = () => createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = getSupabase()
     const credentials = await request.json()
 
     // Encriptar cada credencial antes de guardarla
@@ -50,6 +52,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
   try {
+    const supabase = getSupabase()
     // Obtener credenciales (devueltas encriptadas, no las desencriptamos aquí)
     const { data, error } = await supabase
       .from('system_config')

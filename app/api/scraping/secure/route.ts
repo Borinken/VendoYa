@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { decrypt } from '@/lib/encryption'
 import { secureRequest, sessionManager, PLATFORM_CONFIG, getSecurityStats } from '@/lib/anti-detection'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+// Cliente creado al primer uso (no al importar el módulo) para que `next build` no falle sin variables de entorno.
+let _supabase: SupabaseClient | undefined
+const supabase = new Proxy({} as SupabaseClient, {
+  get: (_t, k) => Reflect.get((_supabase ??= createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!)), k),
+})
 
 interface ScrapingRequest {
   platform: 'idealista' | 'fotocasa' | 'realadvisor'

@@ -30,8 +30,8 @@ function LoginForm() {
     setError('')
     setLoading(true)
 
-    const loginEmail = email.trim().toLowerCase() === 'admin' ? 'admin@vendoya.es' : email.trim()
-    const loginPassword = password === '1234' ? '123456' : password
+    const loginEmail = email.trim()
+    const loginPassword = password
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -66,7 +66,7 @@ function LoginForm() {
               <h1 className="text-3xl font-bold text-white">Acceso Admin</h1>
             </div>
           </div>
-          <p className="text-[#B8B5AD] text-sm">Ingresa como administrador con credenciales sencillas para acceder al dashboard.</p>
+          <p className="text-[#B8B5AD] text-sm">Ingresa con tu correo y contraseña para acceder al dashboard.</p>
         </div>
 
         <div className="p-8">
@@ -89,7 +89,7 @@ function LoginForm() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full pl-11 pr-4 py-3 rounded-2xl border border-[#383838] bg-[#0A0A0A] text-[#FAFAFA] focus:outline-none focus:ring-2 focus:ring-[#D4A574] focus:border-transparent transition-all"
-                  placeholder="admin o admin@vendoya.es"
+                  placeholder="tu@correo.com"
                   required
                 />
               </div>
@@ -104,7 +104,7 @@ function LoginForm() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full pl-11 pr-12 py-3 rounded-2xl border border-[#383838] bg-[#0A0A0A] text-[#FAFAFA] focus:outline-none focus:ring-2 focus:ring-[#D4A574] focus:border-transparent transition-all"
-                  placeholder="1234"
+                  placeholder="Tu contraseña"
                   required
                 />
                 <button
@@ -118,7 +118,7 @@ function LoginForm() {
             </div>
 
             <div className="flex items-center justify-between text-sm text-[#B8B5AD]">
-              <span>Admin: <strong className="text-[#E5C28C]">admin</strong> / <strong className="text-[#E5C28C]">1234</strong></span>
+              <span />
               <Link href="/forgot-password" className="text-[#D4A574] hover:text-[#E5C28C] font-medium">
                 ¿Olvidaste tu contraseña?
               </Link>

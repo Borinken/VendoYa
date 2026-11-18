@@ -1,0 +1,548 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Vendoya Habitaciones · contrato e inventario por habitación</title>
+<meta name="description" content="Contrato por habitación, inventario con fotos con fecha y avisos de renta para propietarios e inmobiliarias. Preventa con devolución del 100 % durante 30 días.">
+<meta name="theme-color" content="#0b0f14">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="es_ES">
+<meta property="og:title" content="Vendoya Habitaciones · cada habitación, con pruebas">
+<meta property="og:description" content="Contrato por habitación, fotos con fecha y papeleo de cada inquilino en un solo sitio.">
+<!-- og:image: añadir URL absoluta de assets/video/piso-b.jpg cuando se publique el dominio -->
+<script>
+/* ENLACES DE PAGO DE STRIPE
+   Pega aquí cada Payment Link (Stripe > Payment Links), p. ej. 'https://buy.stripe.com/xxxx'.
+   Vacío = el botón muestra "Reservar plaza" y abre WhatsApp, así no hay botón muerto.
+   (Si más adelante se añade el plan mensual de propietario, añade un
+   <a data-pay="propietario-mensual"> en la tarjeta de Propietario.) */
+var PAY_LINKS={
+  // OJO: son enlaces de MODO PRUEBA (Stripe sandbox, tarjeta 4242 4242 4242 4242). Sustituir por los reales antes de publicar.
+  'propietario-anual':'https://buy.stripe.com/test_fZubJ12T50Ua2JWeP38Vi00',      // Propietario 99 €/año
+  'propietario-mensual':'',    // Propietario mensual (aún no aparece en la web)
+  'inmobiliaria-mensual':'https://buy.stripe.com/test_eVq4gz1P1eL0aco22h8Vi01'    // Inmobiliaria 29 €/mes + 2 €/hab (cantidad ajustable)
+};
+</script>
+<link rel="preload" as="image" href="assets/video/piso-b.jpg">
+<style>
+@font-face{font-family:Bricolage;src:url(assets/fonts/bricolage-latin.woff2) format("woff2");font-weight:300 800;font-display:swap}
+@font-face{font-family:Instrument;src:url(assets/fonts/instrument-latin.woff2) format("woff2");font-weight:400 700;font-display:swap}
+:root{--ink:#0b0f14;--ink2:#141a22;--line:rgba(255,255,255,.14);--tx:#f4f1ea;--mut:rgba(244,241,234,.68);--acc:#ffb347;--acc-ink:#1a1206;--ok:#6fe0a8;--bad:#ff8a70;--paper:#f4f1ea;--pink:#11161d;--pmut:#56606c;--pline:#dcd6ca;--out:cubic-bezier(.22,1,.36,1);--r:18px}
+*{box-sizing:border-box;margin:0}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;overflow-x:clip}
+[id]{scroll-margin-top:76px}
+body{font-family:Instrument,system-ui,sans-serif;background:var(--ink);color:var(--tx);line-height:1.5;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:Bricolage,system-ui,sans-serif;line-height:1.02;letter-spacing:-.03em;font-weight:700}
+a{color:inherit}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--acc);outline-offset:3px;border-radius:6px}
+.wrap{width:min(1180px,100% - 40px);margin-inline:auto}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 26px;border-radius:999px;border:1px solid transparent;font-weight:600;text-decoration:none;cursor:pointer;transition:transform .18s var(--out),background .2s var(--out),border-color .2s}
+.btn:active{transform:scale(.97)}
+.btn-p{background:var(--acc);color:var(--acc-ink)}
+.btn-p:hover{background:#ffc470}
+.btn-g{border-color:var(--line);background:rgba(255,255,255,.06);backdrop-filter:blur(10px)}
+.btn-g:hover{border-color:rgba(255,255,255,.4)}
+.btn svg{transition:transform .25s var(--out)}
+.btn:hover svg{transform:translateX(4px)}
+
+/* MENÚ FIJO */
+.nav{position:fixed;top:0;left:0;right:0;z-index:20;background:rgba(11,15,20,.82);backdrop-filter:blur(14px) saturate(1.2);border-bottom:1px solid var(--line)}
+.nav .wrap{display:flex;align-items:center;gap:16px;min-height:64px}
+.nav .tag{display:none}
+.menu{display:flex;align-items:center;gap:4px;margin-left:auto}
+.menu .l{display:inline-flex;align-items:center;min-height:44px;padding:0 12px;border-radius:10px;text-decoration:none;color:var(--mut);font-size:15px;transition:color .2s,background .2s}
+.menu .l:hover{color:var(--tx);background:rgba(255,255,255,.07)}
+.menu .btn{min-height:42px;padding:0 18px;font-size:15px;margin-left:4px}
+.burger{display:none;margin-left:auto;width:48px;height:48px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.06);cursor:pointer;place-items:center;align-content:center;gap:5px}
+.burger i{display:block;width:20px;height:2px;border-radius:2px;background:var(--tx);transition:transform .25s var(--out),opacity .2s}
+.burger[aria-expanded=true] i:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.burger[aria-expanded=true] i:nth-child(2){opacity:0}
+.burger[aria-expanded=true] i:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+.top-sp{height:64px}
+@media(min-width:1100px){.nav .tag{display:block}}
+@media(max-width:959px){
+ .burger{display:grid}
+ .menu{position:absolute;top:100%;left:0;right:0;margin:0;flex-direction:column;align-items:stretch;gap:2px;padding:10px 20px 20px;background:var(--ink);border-bottom:1px solid var(--line);visibility:hidden;opacity:0;transform:translateY(-8px);transition:opacity .22s var(--out),transform .22s var(--out),visibility 0s .22s}
+ .menu.open{visibility:visible;opacity:1;transform:none;transition-delay:0s}
+ .menu .l{min-height:50px;font-size:17px;color:var(--tx)}
+ .menu .btn{margin:8px 0 0;min-height:52px}
+}
+
+/* HERO */
+.hero{position:relative;min-height:100svh;display:grid;grid-template-rows:auto 1fr auto;overflow:hidden;isolation:isolate}
+.shots{position:absolute;inset:0;z-index:-2}
+/* recorrido: la cámara avanza y "atraviesa" cada estancia para entrar en la siguiente */
+.shot{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transform:scale(1);will-change:transform,opacity}
+.shot video{width:100%;height:100%;object-fit:cover;display:block}
+.shot.on{opacity:1;transform:scale(1.16);transition:opacity 1.1s var(--out),transform 7.5s linear}
+.shot.out{z-index:2;opacity:0;transform:scale(2);transition:opacity .9s cubic-bezier(.5,0,.75,0),transform 1.2s cubic-bezier(.5,0,.75,0)}
+.hero::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(11,15,20,.6) 0,rgba(11,15,20,.08) 30%,rgba(11,15,20,.42) 60%,rgba(11,15,20,.96) 100%)}
+.top{display:flex;align-items:center;justify-content:space-between;padding:18px 0}
+.logo{display:flex;align-items:center;gap:10px;font-family:Bricolage;font-weight:700;font-size:18px;letter-spacing:-.02em;text-decoration:none}
+.logo i{width:26px;height:26px;border-radius:8px;background:var(--acc);display:grid;grid-template-columns:1fr 1fr;gap:3px;padding:5px}
+.logo i::before,.logo i::after{content:"";background:var(--acc-ink);border-radius:2px}
+.logo i::after{grid-row:span 2}
+.tag{font-size:12px;letter-spacing:.08em;text-transform:uppercase;padding:7px 12px;border:1px solid var(--line);border-radius:999px;background:rgba(11,15,20,.45);backdrop-filter:blur(8px)}
+.hmid{display:grid;align-content:end;gap:22px;padding:24px 0 26px}
+h1{font-size:clamp(33px,8.4vw,118px);font-weight:800;text-transform:uppercase;letter-spacing:-.045em;line-height:.94;text-shadow:0 2px 40px rgba(0,0,0,.35)}
+h1 span{display:block;overflow:hidden}
+h1 b{display:block;font-weight:inherit;transform:translateY(105%);animation:rise .9s var(--out) forwards;animation-delay:calc(var(--i)*90ms + 150ms)}
+h1 em{font-style:normal;color:var(--acc)}
+@keyframes rise{to{transform:none}}
+.lead{max-width:44ch;font-size:clamp(17px,1.5vw,20px);color:var(--mut)}
+.fade{opacity:0;transform:translateY(14px);animation:in .7s var(--out) forwards;animation-delay:calc(var(--i)*90ms + 300ms)}
+@keyframes in{to{opacity:1;transform:none}}
+.cta{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.cta small{color:var(--mut);font-size:13px;flex-basis:100%}
+
+/* tarjeta viva + marcadores */
+.live{position:absolute;right:max(20px,calc((100vw - 1180px)/2));top:22%;width:300px;padding:16px;border-radius:var(--r);border:1px solid var(--line);background:rgba(11,15,20,.6);backdrop-filter:blur(18px) saturate(1.3);box-shadow:0 30px 80px rgba(0,0,0,.45)}
+.live header{display:flex;justify-content:space-between;align-items:center;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin-bottom:12px}
+.live h3{font-size:22px;margin-bottom:10px}
+.rows{display:grid;gap:8px}
+.row{display:flex;align-items:center;gap:10px;font-size:14px;padding:9px 10px;border-radius:12px;background:rgba(255,255,255,.06);opacity:0;transform:translateY(8px);transition:opacity .45s var(--out),transform .45s var(--out);transition-delay:calc(var(--i)*110ms + 250ms)}
+.live.on .row{opacity:1;transform:none}
+.row i{flex:none;width:20px;height:20px;border-radius:50%;background:var(--ok);display:grid;place-items:center}
+.row i::after{content:"";width:9px;height:5px;border:2px solid #06281a;border-top:0;border-right:0;transform:rotate(-45deg) translate(1px,-1px)}
+.row.warn i{background:var(--acc)}
+.row.warn i::after{width:2px;height:8px;border:0;background:var(--acc-ink);transform:none}
+.row span{margin-left:auto;color:var(--mut);font-size:12px}
+.pin{position:absolute;display:flex;align-items:center;gap:8px;font-size:12.5px;opacity:0;transform:scale(.6);transition:opacity .4s var(--out),transform .5s var(--out);transition-delay:calc(var(--i)*160ms + 700ms)}
+.hero.live-on .pin{opacity:1;transform:none}
+.pin u{flex:none;width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 0 0 5px rgba(255,255,255,.28);animation:pulse2 2.4s var(--out) infinite}
+.pin.d u{background:var(--bad);box-shadow:0 0 0 5px rgba(255,138,112,.3)}
+@keyframes pulse2{50%{box-shadow:0 0 0 11px rgba(255,255,255,0)}}
+.pin b{font-weight:500;padding:6px 10px;border-radius:999px;background:rgba(11,15,20,.72);backdrop-filter:blur(10px);border:1px solid var(--line);white-space:nowrap}
+/* selector de habitación tipo historia */
+.rooms{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:0 0 22px}
+.room span{display:none}
+@media(min-width:860px){.room span{display:block}}
+.room{text-align:left;background:none;border:0;padding:10px 0 0;cursor:pointer;color:var(--mut);font-size:13px;transition:color .2s}
+.room::before{content:"";display:block;height:3px;border-radius:3px;margin-bottom:10px;background:linear-gradient(90deg,var(--acc) 0 0) no-repeat rgba(255,255,255,.22);background-size:0 100%}
+.room.on{color:var(--tx)}
+.room.on::before{animation:fill 6s linear forwards}
+.room.done::before{background-size:100% 100%}
+@keyframes fill{to{background-size:100% 100%}}
+.room strong{display:block;font-family:Bricolage;font-size:clamp(13px,3.4vw,17px);letter-spacing:-.02em}
+
+/* SECCIONES CLARAS */
+.paper{background:var(--paper);color:var(--pink)}
+section{padding:clamp(56px,8vw,104px) 0}
+.kick{font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--pmut);margin-bottom:14px}
+h2{font-size:clamp(34px,5.2vw,68px);max-width:16ch}
+.tour{display:grid;gap:28px;margin-top:36px}
+.tabs{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:none;text-align:left;padding:14px 18px;border-radius:14px;border:1px solid var(--pline);background:none;cursor:pointer;position:relative;overflow:hidden;transition:background .25s var(--out),color .25s,border-color .25s,transform .18s var(--out)}
+.tab:active{transform:scale(.97)}
+.tab b{display:block;font-family:Bricolage;font-size:18px;letter-spacing:-.02em}
+.tab small{display:none;color:var(--pmut);font-size:14px;margin-top:4px}
+.tab[aria-selected=true]{background:var(--pink);color:var(--tx);border-color:var(--pink)}
+.tab[aria-selected=true] small{color:var(--mut)}
+.tab[aria-selected=true]::after{content:"";position:absolute;left:0;bottom:0;height:3px;width:100%;background:var(--acc);transform-origin:left;animation:bar 7s linear forwards}
+@keyframes bar{from{transform:scaleX(0)}}
+.stage{position:relative;min-height:440px;border-radius:26px;background:var(--pink);color:var(--tx);overflow:hidden}
+.pane{position:absolute;inset:0;padding:clamp(20px,3vw,36px);display:grid;gap:18px;align-content:start;opacity:0;visibility:hidden;transform:translateY(16px) scale(.985);transition:opacity .35s var(--out),transform .5s var(--out),visibility 0s .35s}
+.pane.on{opacity:1;visibility:visible;transform:none;transition-delay:.12s,.12s,0s}
+.pane h3{font-size:clamp(24px,2.6vw,34px)}
+.pane p{color:var(--mut);max-width:46ch}
+.it{opacity:0;transform:translateY(12px);transition:opacity .5s var(--out),transform .5s var(--out);transition-delay:calc(var(--i)*90ms + 260ms)}
+.pane.on .it{opacity:1;transform:none}
+.card{background:var(--ink2);border:1px solid var(--line);border-radius:16px;padding:16px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font-size:13.5px;padding:8px 12px;border-radius:999px;border:1px solid var(--line)}
+.chip.y{background:rgba(111,224,168,.14);border-color:rgba(111,224,168,.5);color:var(--ok)}
+.sign{display:flex;align-items:end;gap:14px;margin-top:6px}
+.sign svg{width:150px;height:46px}
+.sign path{fill:none;stroke:var(--acc);stroke-width:2.4;stroke-linecap:round;stroke-dasharray:420;stroke-dashoffset:420}
+.pane.on .sign path{animation:draw 1.5s var(--out) .9s forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+.sign small{color:var(--mut)}
+.inv{display:grid;gap:14px}
+.photo{position:relative;border-radius:14px;overflow:hidden;aspect-ratio:16/10;background:#222 center/cover}
+.photo .pin{opacity:0}
+.pane.on .photo .pin{opacity:1;transform:none}
+.stamp{position:absolute;left:12px;bottom:12px;font-size:12px;padding:5px 9px;border-radius:8px;background:rgba(11,15,20,.75);font-variant-numeric:tabular-nums}
+.list{display:grid;gap:8px;font-size:14.5px}
+.list li{list-style:none;display:flex;justify-content:space-between;gap:12px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.05)}
+.list span{color:var(--mut)}
+.msg{max-width:330px;padding:12px 14px;border-radius:16px 16px 16px 4px;background:#1f2a36;font-size:15px}
+.msg.me{margin-left:auto;border-radius:16px 16px 4px 16px;background:var(--acc);color:var(--acc-ink)}
+.msg small{display:block;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;opacity:.7;margin-bottom:4px}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;font-size:13px;color:var(--mut)}
+.steps div::before{content:"";display:block;height:4px;border-radius:4px;background:rgba(255,255,255,.14);margin-bottom:8px}
+.steps .y{color:var(--tx)}
+.steps .y::before{background:var(--ok)}
+.bars{display:grid;gap:10px;font-size:14px}
+.bar{display:grid;grid-template-columns:104px 1fr 44px;align-items:center;gap:10px}
+.bar i{height:10px;border-radius:10px;background:rgba(255,255,255,.1);overflow:hidden}
+.bar i::after{content:"";display:block;height:100%;width:var(--w);background:var(--acc);border-radius:10px;transform:scaleX(0);transform-origin:left;transition:transform 1s var(--out) .5s}
+.pane.on .bar i::after{transform:scaleX(1)}
+.bar span{color:var(--mut);text-align:right;font-variant-numeric:tabular-nums}
+.ej{font-size:12px;color:var(--mut)}
+
+/* precios + reserva */
+.buy{display:grid;grid-template-columns:minmax(0,1fr);gap:22px;margin-top:36px}
+.buy>*{min-width:0;overflow-wrap:anywhere}
+.plan{border:1px solid var(--pline);border-radius:22px;padding:24px;display:grid;gap:10px;align-content:start;transition:transform .3s var(--out),box-shadow .3s var(--out)}
+.plan:hover{transform:translateY(-4px);box-shadow:0 22px 50px rgba(17,22,29,.12)}
+.plan.k{background:var(--pink);color:var(--tx);border-color:var(--pink)}
+.plan h3{font-size:22px}
+.price{font-family:Bricolage;font-size:clamp(44px,5vw,60px);font-weight:700;letter-spacing:-.04em;line-height:1}
+.price small{font-size:16px;font-weight:500;letter-spacing:0;opacity:.7}
+.plan ul{padding:0;display:grid;gap:6px;font-size:15px}
+.plan li{list-style:none;padding-left:22px;position:relative}
+.plan li::before{content:"";position:absolute;left:2px;top:.5em;width:10px;height:5px;border:2px solid currentColor;border-top:0;border-right:0;transform:rotate(-45deg);opacity:.7}
+.note{font-size:13px;opacity:.72}
+form{border-radius:22px;padding:24px;background:#fff;border:1px solid var(--pline);display:grid;gap:14px}
+form h3{font-size:24px}
+label{display:grid;gap:6px;font-size:14px;font-weight:600}
+input[type=text],input[type=email],select{min-height:50px;padding:0 14px;border-radius:12px;border:1px solid #b9b2a4;background:#fff;color:var(--pink);font-weight:400;transition:border-color .2s,box-shadow .2s}
+input:focus,select:focus{outline:0;border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,179,71,.55)}
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.two input,.two select,.two label{min-width:0;width:100%;box-sizing:border-box}
+@media(max-width:420px){.two{grid-template-columns:minmax(0,1fr)}}
+.chk{display:flex;gap:10px;align-items:flex-start;font-weight:400;font-size:13.5px;color:var(--pmut)}
+.chk input{width:20px;height:20px;margin-top:2px;accent-color:var(--pink);flex:none}
+form .btn-p{background:var(--pink);color:var(--tx);width:100%}
+form .btn-p:hover{background:#000}
+.status{font-size:14px;padding:12px 14px;border-radius:12px;display:none}
+.status.ok{display:block;background:#e3f4ea;color:#0c4a2c}
+.status.err{display:block;background:#fde6df;color:#7a1f0b}
+details{border-top:1px solid var(--pline);padding:14px 0}
+summary{cursor:pointer;font-weight:600;list-style:none;display:flex;justify-content:space-between;gap:12px}
+summary::after{content:"+";font-size:20px;line-height:1;transition:transform .3s var(--out)}
+details[open] summary::after{transform:rotate(45deg)}
+details p{color:var(--pmut);margin-top:8px;max-width:60ch}
+footer{background:var(--ink);padding:28px 0 96px;font-size:13px;color:var(--mut)}
+footer .wrap{display:flex;flex-wrap:wrap;gap:8px 24px;justify-content:space-between}
+.rv{opacity:0;transform:translateY(22px);transition:opacity .7s var(--out),transform .7s var(--out);transition-delay:calc(var(--i,0)*80ms)}
+.rv.in{opacity:1;transform:none}
+.wafab{position:fixed;right:14px;bottom:calc(max(12px,env(safe-area-inset-bottom)) + 70px);z-index:10;display:inline-flex;align-items:center;gap:10px;min-height:52px;padding:0 18px 0 14px;border-radius:999px;background:#25d366;color:#06281a;font-weight:700;text-decoration:none;box-shadow:0 12px 34px rgba(0,0,0,.4);transition:transform .18s var(--out),background .2s}
+.wafab:hover{background:#3be57c}
+.wafab:active{transform:scale(.96)}
+.wafab svg{flex:none}
+.wafab span{display:none}
+.pay{display:grid;gap:8px;margin-top:6px}
+.pay .btn{width:100%}
+.plan.k .btn-p:hover{background:#ffc470}
+.pnote{font-size:13px;opacity:.8}
+.pnote a{font-weight:600}
+.more{margin-top:14px;font-weight:600}
+.end{background:var(--ink);padding:clamp(64px,9vw,120px) 0;border-top:1px solid var(--line)}
+.end h2{max-width:14ch}
+.end .cta{margin-top:28px}
+.contact{margin-top:22px;display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;font-size:15px;color:var(--pmut)}
+.contact a{color:var(--pink);font-weight:600}
+.dock{position:fixed;left:12px;right:12px;bottom:max(12px,env(safe-area-inset-bottom));z-index:9;transform:translateY(140%);transition:transform .5s var(--out)}
+.dock.on{transform:none}
+.dock .btn{width:100%;box-shadow:0 14px 40px rgba(0,0,0,.4)}
+
+@media(max-width:859px){.live{position:static;width:auto;margin:0 20px 6px;padding:12px 14px;background:rgba(11,15,20,.42)}.live header{display:none}.live h3{font-size:17px;margin-bottom:8px}.rows{display:flex;flex-wrap:wrap;gap:6px}.row{padding:6px 10px 6px 6px;font-size:12.5px;border-radius:999px}.row span{display:none}.row i{width:16px;height:16px}.pin.h{display:none}.hmid{padding-top:8px}.hero{grid-template-rows:auto auto 1fr auto}.live{order:0}.stage{min-height:560px}}
+@media(min-width:860px){
+ .tour{grid-template-columns:330px 1fr;align-items:start}
+ .tabs{flex-direction:column;overflow:visible}
+ .tab small{display:block}
+ .inv{grid-template-columns:1.25fr 1fr;align-items:start}
+ .buy{grid-template-columns:1fr 1fr 1.15fr;align-items:start}
+ .dock{display:none}
+ .wafab{bottom:22px;right:22px}
+ .wafab span{display:inline}
+ footer{padding-bottom:28px}
+}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation-duration:.01ms!important;animation-delay:0s!important;transition-duration:.01ms!important;transition-delay:0s!important}.shot.on{transform:none}}
+</style>
+</head>
+<body>
+
+<div class="hero" id="hero">
+  <div class="shots" aria-hidden="true">
+    <div class="shot" style="background-image:url('assets/video/piso-b.jpg')"><video muted loop playsinline preload="auto" poster="assets/video/piso-b.jpg" src="assets/video/piso-b.mp4"></video></div>
+    <div class="shot" style="background-image:url('assets/video/piso-a.jpg')"><video muted loop playsinline preload="none" poster="assets/video/piso-a.jpg" data-vsrc="assets/video/piso-a.mp4"></video></div>
+    <div class="shot" data-src="https://images.unsplash.com/photo-1560448075-57d0285fc59b?auto=format&fit=crop&w=1800&q=80"></div>
+    <div class="shot" data-src="https://images.unsplash.com/photo-1638454668466-e8dbd5462f20?auto=format&fit=crop&w=1800&q=80"></div>
+    <div class="shot" data-src="https://images.unsplash.com/photo-1781249144235-7dff19f6e7db?auto=format&fit=crop&w=1800&q=80"></div>
+  </div>
+
+  <header class="nav" id="nav">
+    <div class="wrap">
+      <a class="logo" href="#hero"><i aria-hidden="true"></i>Vendoya Habitaciones</a>
+      <span class="tag">Prototipo · no publicado</span>
+      <button class="burger" id="burger" type="button" aria-expanded="false" aria-controls="menu" aria-label="Abrir menú"><i></i><i></i><i></i></button>
+      <nav class="menu" id="menu" aria-label="Principal">
+        <a class="l" href="#tour">Cómo funciona</a>
+        <a class="l" href="#precios">Precios</a>
+        <a class="l" href="#preguntas">Preguntas</a>
+        <a class="l" href="#contacto">Contacto</a>
+        <a class="l" href="/habitaciones/app/login">Entrar</a>
+        <a class="btn btn-p" href="/habitaciones/app/registro">Empezar</a>
+      </nav>
+    </div>
+  </header>
+  <div class="top-sp" aria-hidden="true"></div>
+
+  <aside class="live on" id="live" aria-live="polite">
+    <header><span id="lv-room">Habitación 1</span><span>Ejemplo</span></header>
+    <h3 id="lv-who">Contrato firmado</h3>
+    <div class="rows" id="lv-rows"></div>
+  </aside>
+
+  <div class="pin h" style="left:14%;top:44%;--i:0"><u></u><b>Cama · sin daños</b></div>
+  <div class="pin h d" style="left:46%;top:30%;--i:1"><u></u><b>Pared · roce previo, 12/01</b></div>
+  <div class="pin h" style="left:30%;top:62%;--i:2"><u></u><b>Suelo · foto con fecha</b></div>
+
+  <div class="wrap hmid">
+    <h1><span><b style="--i:1">Entra.</b></span><span><b style="--i:2">Cada habitación,</b></span><span><b style="--i:3">con <em>pruebas.</em></b></span></h1>
+    <p class="lead fade" style="--i:5">Contrato por habitación, fotos con fecha y todo el papeleo de cada inquilino en un solo sitio. Para propietarios e inmobiliarias.</p>
+    <div class="cta fade" style="--i:6">
+      <a class="btn btn-p" href="#reserva">Reservar mi plaza <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      <a class="btn btn-g" href="#tour">Ver cómo funciona</a>
+      <small>Devolución del 100 % durante 30 días. El producto aún no está terminado.</small>
+    </div>
+  </div>
+
+  <div class="wrap rooms" role="group" aria-label="Habitaciones de ejemplo">
+    <button class="room" type="button"><strong>El piso</strong><span>Bienvenido</span></button>
+    <button class="room" type="button"><strong>Salón</strong><span>Reglas de la casa</span></button>
+    <button class="room" type="button"><strong>Hab. 1</strong><span>Contrato firmado</span></button>
+    <button class="room" type="button"><strong>Hab. 2</strong><span>Inventario con fotos</span></button>
+    <button class="room" type="button"><strong>Hab. 3</strong><span>Renta al día</span></button>
+  </div>
+</div>
+
+<main class="paper">
+<section id="tour">
+  <div class="wrap">
+    <p class="kick rv">Cómo funciona</p>
+    <h2 class="rv" style="--i:1">Un piso. Cada habitación, bajo control.</h2>
+    <div class="tour">
+      <div class="tabs rv" role="tablist" aria-label="Funciones" style="--i:2">
+        <button class="tab" role="tab" aria-selected="true" aria-controls="p0" id="t0"><b>Contrato</b><small>Tú eliges las condiciones. Sale un contrato por habitación.</small></button>
+        <button class="tab" role="tab" aria-selected="false" aria-controls="p1" id="t1" tabindex="-1"><b>Inventario</b><small>Fotos con fecha del estado del cuarto, dentro del contrato.</small></button>
+        <button class="tab" role="tab" aria-selected="false" aria-controls="p2" id="t2" tabindex="-1"><b>Avisos</b><small>Renta, fianza y fin de contrato, sin que se te pase.</small></button>
+        <button class="tab" role="tab" aria-selected="false" aria-controls="p3" id="t3" tabindex="-1"><b>Daños</b><small>Averías y desperfectos con fotos. Registro privado.</small></button>
+        <button class="tab" role="tab" aria-selected="false" aria-controls="p4" id="t4" tabindex="-1"><b>Inmobiliarias</b><small>Toda la cartera en un panel, con tu marca.</small></button>
+      </div>
+
+      <div class="stage rv" style="--i:3">
+        <div class="pane on" id="p0" role="tabpanel" aria-labelledby="t0">
+          <h3 class="it" style="--i:0">Marcas lo que incluye. El contrato se escribe solo.</h3>
+          <p class="it" style="--i:1">Eliges entre cláusulas de un catálogo que revisa un abogado antes del lanzamiento. Nosotros no te aconsejamos cuál poner.</p>
+          <div class="chips it" style="--i:2"><span class="chip y">Luz incluida</span><span class="chip y">Agua incluida</span><span class="chip">Gas a partes iguales</span><span class="chip y">Internet</span><span class="chip y">Nevera propia</span><span class="chip">Baño compartido</span><span class="chip y">Cerradura propia</span><span class="chip">No fumar</span></div>
+          <div class="card it" style="--i:3"><div class="sign"><svg viewBox="0 0 150 46" aria-hidden="true"><path d="M4 34c10-22 18-28 22-14s-8 22-2 20 14-30 22-26-6 22 2 22 10-20 18-18-2 16 6 16 12-14 20-14 6 12 14 10 16-10 34-12"/></svg><small>Firmado por las dos partes<br>Hab. 1 · 12/01/2027 · ejemplo</small></div></div>
+        </div>
+
+        <div class="pane" id="p1" role="tabpanel" aria-labelledby="t1">
+          <h3 class="it" style="--i:0">Así estaba el cuarto el día que entró.</h3>
+          <div class="inv">
+            <div class="photo it" style="--i:1;background-image:url('https://images.unsplash.com/photo-1781249144056-ec397e444dfa?auto=format&fit=crop&w=1200&q=80')" role="img" aria-label="Foto de ejemplo de una habitación con marcadores">
+              <div class="pin" style="left:18%;top:52%;--i:0"><u></u><b>Cama</b></div>
+              <div class="pin d" style="left:58%;top:26%;--i:1"><u></u><b>Roce previo</b></div>
+              <span class="stamp">12/01/2027 · 10:42</span>
+            </div>
+            <ul class="list it" style="--i:2"><li>Cama y colchón <span>Sin daños</span></li><li>Armario <span>Sin daños</span></li><li>Pared junto a ventana <span>Roce previo</span></li><li>Escritorio y silla <span>Sin daños</span></li></ul>
+          </div>
+          <p class="ej it" style="--i:3">Foto: Unsplash. Datos de ejemplo.</p>
+        </div>
+
+        <div class="pane" id="p2" role="tabpanel" aria-labelledby="t2">
+          <h3 class="it" style="--i:0">Te avisa antes de que sea un problema.</h3>
+          <div class="msg it" style="--i:1"><small>Asistente automático</small>Hola, Marta. La renta de la Hab. 2 vence el día 5. ¿Envío el recordatorio a tu inquilino?</div>
+          <div class="msg me it" style="--i:2">Sí, envíalo.</div>
+          <div class="msg it" style="--i:3"><small>Asistente automático</small>Hecho. El contrato de la Hab. 3 termina en 60 días. Te lo recuerdo con tiempo.</div>
+          <p class="ej it" style="--i:4">Quien escribe es un asistente automático, y siempre lo dice. Conversación de ejemplo.</p>
+        </div>
+
+        <div class="pane" id="p3" role="tabpanel" aria-labelledby="t3">
+          <h3 class="it" style="--i:0">Lo que se rompe queda apuntado, con fecha.</h3>
+          <p class="it" style="--i:1">El inquilino avisa con fotos y cuenta su versión. El registro es tuyo: no se comparte con otros propietarios ni se puntúa a nadie.</p>
+          <div class="card it" style="--i:2"><strong>Grifo del baño gotea · Hab. 2</strong><p style="margin:6px 0 14px;font-size:14px">Avisado el 03/02/2027 con 2 fotos.</p><div class="steps"><div class="y">Avisado</div><div class="y">Visto por ti</div><div>Reparado</div></div></div>
+          <p class="ej it" style="--i:3">Aviso de ejemplo.</p>
+        </div>
+
+        <div class="pane" id="p4" role="tabpanel" aria-labelledby="t4">
+          <h3 class="it" style="--i:0">Toda tu cartera de habitaciones, en una vista.</h3>
+          <p class="it" style="--i:1">Para inmobiliarias y gestores: contratos, inventarios y avisos de todos tus pisos, con tu marca.</p>
+          <div class="card bars it" style="--i:2">
+            <div class="bar">C/ Infante 12<i style="--w:100%"></i><span>5/5</span></div>
+            <div class="bar">Av. Andalucía 8<i style="--w:75%"></i><span>3/4</span></div>
+            <div class="bar">C/ Lucena 31<i style="--w:83%"></i><span>5/6</span></div>
+            <div class="bar">Pl. San Luis 2<i style="--w:50%"></i><span>2/4</span></div>
+          </div>
+          <p class="ej it" style="--i:3">Habitaciones ocupadas por piso. Datos de ejemplo.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="precios" style="padding-top:0">
+  <div class="wrap">
+    <p class="kick rv">Preventa</p>
+    <h2 class="rv" style="--i:1">Reserva ahora. Si no te convence, te devolvemos todo.</h2>
+    <div class="buy">
+      <div class="plan rv" style="--i:1">
+        <h3>Propietario</h3>
+        <div class="price">99 €<small> /año</small></div>
+        <ul><li>Hasta 5 habitaciones</li><li>Contrato e inventario con fotos</li><li>Avisos de renta, fianza y fin de contrato</li><li>Registro privado de daños</li></ul>
+        <p class="note">Precio de preventa. Devolución durante 30 días.</p>
+        <div class="pay"><a class="btn btn-p" data-pay="propietario-anual" href="#pago-pendiente">Reservar plaza</a><p class="pnote">Pago seguro con Stripe · cancela cuando quieras · <a href="legal.html">Condiciones</a> · <a href="privacidad.html">Privacidad</a></p></div>
+      </div>
+      <div class="plan k rv" style="--i:2">
+        <h3>Inmobiliaria o gestor</h3>
+        <div class="price">29 €<small> /mes + 2 € por habitación</small></div>
+        <ul><li>Panel de toda la cartera</li><li>Con tu marca</li><li>Todo lo del plan Propietario</li></ul>
+        <p class="note">Precio de preventa. Devolución durante 30 días.</p>
+        <div class="pay"><a class="btn btn-p" data-pay="inmobiliaria-mensual" href="#pago-pendiente">Reservar plaza</a><p class="pnote">Pago seguro con Stripe · cancela cuando quieras · <a href="legal.html">Condiciones</a> · <a href="privacidad.html">Privacidad</a></p></div>
+      </div>
+      <form class="rv" style="--i:3" novalidate id="reserva">
+        <h3>Reservar mi plaza</h3>
+        <div class="two">
+          <label>Nombre<input type="text" name="n" autocomplete="name" required></label>
+          <label>Correo<input type="email" name="e" autocomplete="email" required></label>
+        </div>
+        <div class="two">
+          <label>Soy<select name="p"><option>Propietario</option><option>Inmobiliaria o gestor</option></select></label>
+          <label>Habitaciones<select name="h"><option>1 a 3</option><option>4 a 9</option><option>10 o más</option></select></label>
+        </div>
+        <label class="chk"><input type="checkbox" name="c" required><span>Acepto que [razón social y NIF] use estos datos solo para contactarme sobre la preventa. Puedo pedir que los borren en [correo].</span></label>
+        <div aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden"><label>No rellenar<input type="text" name="web" tabindex="-1" autocomplete="off"></label></div>
+        <button class="btn btn-p" type="submit">Reservar mi plaza</button>
+        <p class="status" id="st" role="status" aria-live="polite"></p>
+      </form>
+    </div>
+
+    <p class="contact rv" id="contacto">¿Prefieres hablar con una persona? <a href="https://wa.me/34604347363?text=Hola%2C%20me%20interesa%20la%20preventa%20de%20Vendoya%20Habitaciones." target="_blank" rel="noopener">Escríbenos por WhatsApp</a> <span>o llama al <a href="tel:+34604347363">+34 604 34 73 63</a></span></p>
+
+    <div style="margin-top:44px" class="rv" id="preguntas">
+      <details><summary>¿Esto es asesoría jurídica?</summary><p>No. Tú eliges las cláusulas entre un catálogo que revisa un abogado antes del lanzamiento. No te decimos cuál poner ni garantizamos un resultado legal.</p></details>
+      <details><summary>¿Quién ve los datos de mis inquilinos?</summary><p>Solo tú. No los vendemos ni los compartimos con otros propietarios. No hay listas de inquilinos ni puntuaciones.</p></details>
+      <details><summary>¿Puedo filtrar inquilinos por sexo o nacionalidad?</summary><p>No. La herramienta no lo permite. Sí puedes fijar reglas de la casa: fumar, mascotas, visitas y horarios.</p></details>
+      <details><summary>¿Incluye seguro de impago?</summary><p>No. Por ahora no vendemos ni incluimos seguros.</p></details>
+      <p class="more"><a href="faq.html">Ver todas las preguntas frecuentes</a></p>
+    </div>
+  </div>
+</section>
+</main>
+
+<section class="end" aria-labelledby="end-h">
+  <div class="wrap">
+    <p class="kick rv" style="color:var(--mut)">Tu primera habitación</p>
+    <h2 class="rv" id="end-h" style="--i:1">Entra. Con pruebas.</h2>
+    <div class="cta rv" style="--i:2">
+      <a class="btn btn-p" href="/habitaciones/app/registro">Empezar <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      <a class="btn btn-g" href="/habitaciones/app/login">Entrar</a>
+    </div>
+  </div>
+</section>
+
+<footer><div class="wrap"><span>Prototipo, no publicado. Vídeo de Pexels, fotos de Unsplash y datos de ejemplo.<br><a href="faq.html">FAQ</a> · <a href="legal.html">Condiciones</a> · <a href="privacidad.html">Privacidad</a> · <a href="cookies.html">Cookies</a></span><span>Vendoya Habitaciones · [razón social y NIF] · WhatsApp y teléfono <a href="tel:+34604347363">+34 604 34 73 63</a></span></div></footer>
+
+<a class="wafab" href="https://wa.me/34604347363?text=Hola%2C%20me%20interesa%20la%20preventa%20de%20Vendoya%20Habitaciones." target="_blank" rel="noopener" aria-label="Escribir por WhatsApp al +34 604 34 73 63"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21l1.7-5A8.5 8.5 0 1 1 8 19.3z"/><path d="M9 9.5c0 3 2.5 5.5 5.5 5.5l1.2-1.5-2-1-1 .7a4 4 0 0 1-1.9-1.9l.7-1-1-2z"/></svg><span>WhatsApp</span></a>
+
+<div class="dock" id="dock"><a class="btn btn-p" href="#reserva">Reservar mi plaza · 99 €/año</a></div>
+
+<script>
+(function(){
+  var $=function(s,r){return (r||document).querySelector(s)},$$=function(s,r){return [].slice.call((r||document).querySelectorAll(s))};
+  var calm=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Hero: tres habitaciones que rotan como una historia
+  var hero=$('#hero'),shots=$$('.shot'),rooms=$$('.room'),live=$('#live'),hi=0,ht,N=shots.length;
+  var data=[
+    {r:'El piso',t:'Un piso, tres habitaciones',rows:[['3 contratos, uno por habitación','Al día'],['3 inquilinos','Con expediente'],['Todo en un solo sitio','Tuyo']]},
+    {r:'Salón y zonas comunes',t:'Reglas de la casa',rows:[['Fumar, mascotas y visitas','Firmadas'],['Luz y agua','Repartidas'],['Limpieza por turnos','Acordada']]},
+    {r:'Habitación 1',t:'Contrato firmado',rows:[['Contrato por habitación','12/01'],['Reglas de la casa','Firmadas'],['Fianza','Custodiada']]},
+    {r:'Habitación 2',t:'Inventario con fotos',rows:[['12 fotos con fecha','12/01'],['Roce previo en pared','Anotado','warn'],['Inquilino conforme','Firmado']]},
+    {r:'Habitación 3',t:'Renta al día',rows:[['Renta de febrero','Cobrada'],['Recibo enviado','05/02'],['Fin de contrato','En 60 días','warn']]}
+  ];
+  function paint(i){
+    var d=data[i];
+    $('#lv-room').textContent=d.r;$('#lv-who').textContent=d.t;
+    $('#lv-rows').innerHTML=d.rows.map(function(x,k){return '<div class="row'+(x[2]?' warn':'')+'" style="--i:'+k+'"><i></i>'+x[0]+'<span>'+x[1]+'</span></div>'}).join('');
+  }
+  function go(i){
+    hi=i;live.classList.remove('on');hero.classList.remove('live-on');
+    var nx=shots[(i+1)%N];if(nx.dataset.src){new Image().src=nx.dataset.src} // precarga la siguiente estancia
+    shots.forEach(function(s,k){
+      if(k===i&&s.dataset.src){s.style.backgroundImage="url('"+s.dataset.src+"')";delete s.dataset.src}
+      if(k!==i&&s.classList.contains('on')){s.classList.add('out');setTimeout(function(){s.classList.remove('out')},1300)}
+      s.classList.toggle('on',k===i);
+      var v=s.querySelector('video');
+      if(v){if(k===i){if(v.dataset.vsrc){v.src=v.dataset.vsrc;delete v.dataset.vsrc}if(!calm){var p=v.play();if(p)p.catch(function(){})}}else setTimeout(function(){if(!s.classList.contains('on'))v.pause()},1300)}
+    });
+    rooms.forEach(function(b,k){b.classList.toggle('on',k===i);b.classList.toggle('done',k<i)});
+    paint(i);
+    requestAnimationFrame(function(){requestAnimationFrame(function(){live.classList.add('on');if(i===2)hero.classList.add('live-on')})});
+    clearTimeout(ht);if(!calm)ht=setTimeout(function(){go((hi+1)%N)},6000);
+  }
+  rooms.forEach(function(b,k){b.addEventListener('click',function(){go(k)})});
+  go(0);
+
+  // Recorrido: pestañas que avanzan solas mientras están a la vista
+  var tabs=$$('.tab'),panes=$$('.pane'),ti=0,tt,seen=false;
+  function tab(i,user){
+    ti=i;
+    tabs.forEach(function(t,k){var on=k===i;t.setAttribute('aria-selected',on);t.tabIndex=on?0:-1});
+    panes.forEach(function(p,k){p.classList.toggle('on',k===i)});
+    if(user&&innerWidth<860)tabs[i].scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});
+    clearTimeout(tt);if(seen&&!calm)tt=setTimeout(function(){tab((ti+1)%tabs.length)},7000);
+  }
+  tabs.forEach(function(t,k){
+    t.addEventListener('click',function(){tab(k,true)});
+    t.addEventListener('keydown',function(e){var d=e.key==='ArrowRight'||e.key==='ArrowDown'?1:e.key==='ArrowLeft'||e.key==='ArrowUp'?-1:0;if(d){e.preventDefault();var n=(k+d+tabs.length)%tabs.length;tab(n,true);tabs[n].focus()}});
+  });
+
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){
+    if(e.target.id==='tour'){seen=e.isIntersecting;if(seen)tab(ti);else clearTimeout(tt);return}
+    if(e.target===hero){$('#dock').classList.toggle('on',!e.isIntersecting);if(!e.isIntersecting)clearTimeout(ht);else if(!calm){clearTimeout(ht);ht=setTimeout(function(){go((hi+1)%N)},6000)}return}
+    if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}
+  })},{threshold:.15});
+  $$('.rv').forEach(function(n){io.observe(n)});io.observe($('#tour'));io.observe(hero);
+
+  // Menú móvil: aria-expanded, foco al abrir, Esc / clic fuera / salir con Tab cierran
+  var nav=$('#nav'),menu=$('#menu'),bt=$('#burger');
+  function setM(o,back){
+    menu.classList.toggle('open',o);bt.setAttribute('aria-expanded',o);bt.setAttribute('aria-label',o?'Cerrar menú':'Abrir menú');
+    if(o)menu.querySelector('a').focus();else if(back)bt.focus();
+  }
+  bt.addEventListener('click',function(){setM(bt.getAttribute('aria-expanded')!=='true')});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&menu.classList.contains('open'))setM(false,true)});
+  document.addEventListener('click',function(e){if(menu.classList.contains('open')&&(!nav.contains(e.target)||e.target.closest('#menu a')))setM(false)});
+  nav.addEventListener('focusout',function(e){if(menu.classList.contains('open')&&e.relatedTarget&&!nav.contains(e.relatedTarget))setM(false)});
+
+  // Botones de pago: URL de PAY_LINKS (inicio del archivo) o, si falta, WhatsApp
+  var WA='https://wa.me/34604347363?text=',MSG={
+    'propietario-anual':'Hola, quiero reservar plaza en Vendoya Habitaciones: plan Propietario, 99 €/año.',
+    'propietario-mensual':'Hola, quiero reservar plaza en Vendoya Habitaciones: plan Propietario mensual.',
+    'inmobiliaria-mensual':'Hola, quiero reservar plaza en Vendoya Habitaciones: plan Inmobiliaria, 29 €/mes + 2 €/hab.'};
+  $$('[data-pay]').forEach(function(a){
+    var k=a.dataset.pay,u=(PAY_LINKS[k]||'').trim();
+    if(/^https:\/\//.test(u)){a.href=u;a.rel='noopener';a.textContent='Comprar ahora'}
+    else{a.href=WA+encodeURIComponent(MSG[k]||MSG['propietario-anual']);a.target='_blank';a.rel='noopener';a.textContent='Reservar plaza'}
+  });
+
+  // Formulario: envía a /api/habitaciones/contacto en vendoya.es; fuera de ahí (file/local) queda la demo
+  var f=$('#reserva'),st=$('#st'),live=/(^|\.)vendoya\.es$/.test(location.hostname);
+  function say(c,t){st.className='status '+c;st.textContent=t}
+  f.addEventListener('submit',function(e){
+    e.preventDefault();
+    if(!f.checkValidity()){say('err','Revisa el nombre, el correo y marca la casilla para continuar.');var bad=f.querySelector(':invalid');if(bad)bad.focus();return}
+    if(!live){say('ok','Demostración: tu reserva no se ha enviado. Este formulario es solo una maqueta.');return}
+    var btn=f.querySelector('button[type=submit]'),d=f.elements;btn.disabled=true;say('ok','Enviando…');
+    fetch('/api/habitaciones/contacto',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({n:d.n.value,e:d.e.value,p:d.p.value,h:d.h.value,c:d.c.checked,web:d.web.value})})
+    .then(function(r){return r.json().catch(function(){return{}}).then(function(j){return{ok:r.ok&&j.ok,m:j.error}})})
+    .then(function(x){
+      if(x.ok){f.reset();say('ok','Gracias. Hemos recibido tu mensaje y tu petición; te respondemos en menos de 24 h laborables. Revisa también la carpeta de spam.')}
+      else say('err',x.m||'No hemos podido enviarlo. Inténtalo de nuevo o escríbenos por WhatsApp.');
+    }).catch(function(){say('err','No hemos podido enviarlo. Comprueba tu conexión o escríbenos por WhatsApp.')})
+    .then(function(){btn.disabled=false});
+  });
+})();
+</script>
+</body>
+</html>
