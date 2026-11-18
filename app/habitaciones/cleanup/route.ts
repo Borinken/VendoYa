@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { rateLimited } from '@/lib/hab/server-portal'
 import { serviceClient } from '@/lib/hab/server-admin'
+import { getServerSession } from '@/lib/hab/session'
+import { timingSafeEqual } from 'node:crypto'
 
 export const dynamic = 'force-dynamic'
 
@@ -22,8 +24,19 @@ async function listAll(sb: SupabaseClient, bucket: string, prefix: string, depth
 }
 
 // Vacía la cola hab_storage_trash (ficheros de cuentas y solicitudes borradas). Solo procesa lo que la base ya marcó
-// para borrar, así que es idempotente y seguro de llamar; lleva límite de frecuencia. Puede llamarse también por cron.
-export async function POST() {
+// para borrar (idempotente); exige CRON_SECRET o administrador de plataforma, y lleva límite de frecuencia.
+function cronOk(req: Request) {
+  const secret = process.env.CRON_SECRET; if (!secret) return false
+  const a = Buffer.from(req.headers.get('authorization') ?? ''), b = Buffer.from(`Bearer ${secret}`)
+  return a.length === b.length && timingSafeEqual(a, b)
+}
+
+// Vercel Cron llama por GET con Authorization: Bearer CRON_SECRET; un administrador de plataforma puede lanzarla por POST con su sesión.
+export async function GET(req: Request) { return run(req) }
+export async function POST(req: Request) { return run(req) }
+
+async function run(req: Request) {
+  if (!cronOk(req) && !(await getServerSession().catch(() => null))?.platformAdmin) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
   if (await rateLimited('cleanup', 'global', 12, 60)) return NextResponse.json({ error: 'Demasiadas llamadas' }, { status: 429 })
   try {
     const sb = serviceClient()

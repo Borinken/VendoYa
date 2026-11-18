@@ -135,7 +135,8 @@ select zz_check('anon: info no filtra datos de otros inquilinos', (select hab_te
 select zz_check('anon: enviar aviso crea incidencia atribuida al inquilino', (select hab_tenant_link_submit((select t from zz_tok),'Avería','La persiana no sube', '{}')->>'code') like 'INC-%');
 select zz_check('anon: categoría o foto ajena rechazadas', zz_try($$select hab_tenant_link_submit((select t from zz_tok),'Hackeo','xxxxxxx','{}')$$) like 'ERR:%' and zz_try($$select hab_tenant_link_submit((select t from zz_tok),'Avería','xxxxxxx','{otra-org/foto.jpg}')$$) like 'ERR:%');
 select zz_check('anon: límite de 5 avisos/hora por enlace', (select count(*) from (select zz_try($$select hab_tenant_link_submit((select t from zz_tok),'Queja','mensaje repetido','{}')$$) r from generate_series(1,8)) s where r like 'ERR:%') >= 3);
-select zz_check('hab_rate_hit: limita tras el máximo', (select hab_rate_hit('test-key',2,60)) = false and (select hab_rate_hit('test-key',2,60)) = false and (select hab_rate_hit('test-key',2,60)) = true);
+reset role; set local role service_role;
+select zz_check('hab_rate_hit (solo service_role, 004): limita tras el máximo', (select hab_rate_hit('test-key',2,60)) = false and (select hab_rate_hit('test-key',2,60)) = false and (select hab_rate_hit('test-key',2,60)) = true);
 rollback;
 -- revocar el enlace lo invalida
 update hab_tenant_links set revoked_at = now();
@@ -146,7 +147,7 @@ rollback;
 \echo '=== Estructura: RLS, search_path, grants ==='
 select zz_check('RLS activada en TODAS las tablas hab_*', (select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind='r' and c.relname like 'hab\_%' and not c.relrowsecurity) = 0);
 select zz_check('todas las security definer hab_* tienen search_path fijo', (select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname like 'hab\_%' and p.prosecdef and not coalesce(p.proconfig::text,'') like '%search_path%') = 0);
-select zz_check('anon solo ejecuta las funciones públicas previstas', (select string_agg(p.proname, ',' order by p.proname) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname like 'hab\_%' and has_function_privilege('anon', p.oid, 'execute')) = 'hab_application_add_doc,hab_application_info,hab_application_save,hab_application_withdraw,hab_rate_hit,hab_reference_answer,hab_reference_info,hab_tenant_link_info,hab_tenant_link_submit');
+select zz_check('anon solo ejecuta las funciones públicas previstas', (select string_agg(p.proname, ',' order by p.proname) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname like 'hab\_%' and has_function_privilege('anon', p.oid, 'execute')) = 'hab_application_add_doc,hab_application_info,hab_application_save,hab_application_withdraw,hab_reference_answer,hab_reference_info,hab_tenant_link_info,hab_tenant_link_submit');
 select 'anon ejecuta: ' || coalesce((select string_agg(p.proname, ',' order by p.proname) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname like 'hab\_%' and has_function_privilege('anon', p.oid, 'execute')), '');
 select zz_check('anon sin privilegios sobre tablas hab_*', (select count(*) from information_schema.role_table_grants where grantee='anon' and table_name like 'hab\_%') = 0);
 select zz_check('authenticated sin DELETE/UPDATE en hab_signatures y hab_audit_log', (select count(*) from information_schema.role_table_grants where grantee='authenticated' and table_name in ('hab_signatures','hab_audit_log','hab_clause_catalog') and privilege_type in ('UPDATE','DELETE')) = 0);

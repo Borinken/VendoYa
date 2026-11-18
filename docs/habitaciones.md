@@ -16,7 +16,7 @@ Rutas: `/habitaciones/app/login`, `/registro`, panel (`/habitaciones/app/...`), 
    1. Crea una cuenta gratuita en resend.com.
    2. Resend > Domains > Add Domain: `vendoya.es`. Resend te da registros DNS (SPF, DKIM y opcionalmente DMARC): añádelos en el panel DNS de tu dominio y pulsa «Verify» hasta que salga *Verified*.
    3. Resend > API Keys > Create API Key (permiso «Sending access»). Copia la clave (empieza por `re_`).
-   4. Vercel > Environment Variables (Production): `RESEND_API_KEY` = esa clave y `HAB_MAIL_FROM` = `Vendoya <admin@vendoya.es>` (dirección del dominio verificado en Resend; recibe por reenvío ImprovMX). Opcional: `NEXT_PUBLIC_SITE_URL` = `https://vendoya.es`. Redespliega.
+   4. Vercel > Environment Variables (Production): `RESEND_API_KEY` = esa clave y `HAB_MAIL_FROM` = `Vendoya <contacto@vendoya.es>` (dirección del dominio verificado en Resend; recibe por reenvío ImprovMX). Opcional: `NEXT_PUBLIC_SITE_URL` = `https://vendoya.es`. Redespliega.
    5. Prueba: firma un contrato de ejemplo con dos correos tuyos y mira que llegan; en Contratos > Firma electrónica verás «enviado» o «fallido» por parte.
    Sin estas variables todo funciona igual, pero el contrato firmado no se envía solo por email: cada firmante ve «Descargar contrato» y «Enviar por WhatsApp», y el propietario usa «Reenviar a las partes» en Contratos. Tampoco se pide el código de 6 dígitos (se firma con enlace único + consentimiento).
 6. **Prueba con dos cuentas** (dueño y otra distinta) que cada una solo ve lo suyo; crea un enlace de inquilino y ábrelo en una ventana privada.

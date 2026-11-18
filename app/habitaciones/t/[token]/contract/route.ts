@@ -10,6 +10,8 @@ export async function GET(_: Request, { params }: { params: { token: string } })
   if (await rateLimited('tdl', params.token, 20)) return NextResponse.json({ error: 'Demasiadas descargas seguidas' }, { status: 429 })
   let info; try { info = await portalInfo(params.token) } catch { return NextResponse.json({ error: 'Servicio no disponible' }, { status: 503 }) }
   if (!info?.contract_pdf_path) return NextResponse.json({ error: 'No hay contrato disponible' }, { status: 404 })
+  // El PDF debe colgar de la carpeta de la propia org del enlace (defensa si una fila apunta a otra org).
+  if (!info.contract_pdf_path.startsWith(`${info.org_id}/`) || info.contract_pdf_path.includes('..')) return NextResponse.json({ error: 'No hay contrato disponible' }, { status: 404 })
   try {
     const { data, error } = await serviceClient().storage.from('hab-docs').createSignedUrl(info.contract_pdf_path, 60, { download: 'contrato.pdf' })
     if (error || !data) return NextResponse.json({ error: 'No se pudo generar la descarga' }, { status: 500 })
