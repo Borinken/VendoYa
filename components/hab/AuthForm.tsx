@@ -15,7 +15,8 @@ const KINDS: [OrgKind, string, string][] = [
   ['agency', 'Inmobiliaria o gestor', 'Gestiono pisos de varios propietarios'],
   ['subtenant', 'Subarrendador', 'Alquilo habitaciones de un piso que no es mío, con permiso del propietario'],
 ]
-const creds = z.object({ email: z.string().trim().email('Correo no válido'), password: z.string().min(8, 'Mínimo 8 caracteres') })
+// La regla de 8 caracteres solo se exige al crear cuenta; al entrar decide Supabase (cuentas antiguas pueden tener contraseña más corta).
+const credsFor = (registro: boolean) => z.object({ email: z.string().trim().email('Correo no válido'), password: registro ? z.string().min(8, 'Mínimo 8 caracteres') : z.string().min(1, 'Escribe tu contraseña') })
 
 export function AuthForm({ mode }: { mode: 'login' | 'registro' }) {
   const router = useRouter()
@@ -28,7 +29,7 @@ export function AuthForm({ mode }: { mode: 'login' | 'registro' }) {
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setMsg(null)
     const e2: Record<string, string> = {}
-    const p = creds.safeParse({ email, password })
+    const p = credsFor(mode === 'registro').safeParse({ email, password })
     if (!p.success) p.error.issues.forEach(i => { e2[String(i.path[0])] = i.message })
     if (reg && name.trim().length < 2) e2.name = 'Escribe un nombre (mín. 2 caracteres)'
     if (reg && !accept) e2.accept = 'Debes aceptar para continuar'
