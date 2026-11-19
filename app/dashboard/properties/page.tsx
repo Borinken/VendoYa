@@ -207,9 +207,10 @@ export default function PropertiesPage() {
         [`${platform}_password`]: password
       }
 
+      const { data: sess } = await supabase.auth.getSession()
       const response = await fetch('/api/credentials', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sess.session?.access_token ?? ''}` },
         body: JSON.stringify(credentialsToSave)
       })
 

@@ -8,8 +8,22 @@ const getSupabase = () => createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
+
+// Solo un administrador de plataforma con sesión válida puede leer o escribir credenciales.
+async function requireAdmin(request: Request): Promise<NextResponse | null> {
+  const token = (request.headers.get('authorization') || '').replace(/^Bearer\s+/i, '')
+  if (!token) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+  const supabase = getSupabase()
+  const { data, error } = await supabase.auth.getUser(token)
+  if (error || !data?.user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+  const { data: adm } = await supabase.from('hab_platform_admins').select('user_id').eq('user_id', data.user.id).maybeSingle()
+  if (!adm) return NextResponse.json({ error: 'Prohibido' }, { status: 403 })
+  return null
+}
+
 export async function POST(request: NextRequest) {
   try {
+    const denied = await requireAdmin(request); if (denied) return denied
     const supabase = getSupabase()
     const credentials = await request.json()
 
@@ -50,8 +64,9 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const denied = await requireAdmin(request); if (denied) return denied
     const supabase = getSupabase()
     // Obtener credenciales (devueltas encriptadas, no las desencriptamos aquí)
     const { data, error } = await supabase
