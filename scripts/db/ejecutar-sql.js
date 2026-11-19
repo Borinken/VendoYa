@@ -1,7 +1,7 @@
 const fs = require('fs');
 
 const SUPABASE_URL = 'https://iuqumqztkzpfefkgguuq.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml1cXVtcXp0a3pwZmVma2dndXVxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzkyNTIyNywiZXhwIjoyMDkzNTAxMjI3fQ.rjrR32YKRQVutuNd0T1CvZ0YFRjoimrdnGfWy0x5cNc';
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 console.log('🚀 Ejecutando SQL en Supabase...\n');
 

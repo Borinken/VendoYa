@@ -2,7 +2,7 @@ const { createClient } = require('@supabase/supabase-js')
 
 const supabase = createClient(
   'https://iuqumqztkzpfefkgguuq.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml1cXVtcXp0a3pwZmVma2dndXVxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc5MjUyMjcsImV4cCI6MjA5MzUwMTIyN30.pgl9RvJfkkIVISXmClXbEcnz9KFHBht7mqc7F-Ftk2k'
+  process.env.SUPABASE_ANON_KEY
 )
 
 async function checkFilterData() {

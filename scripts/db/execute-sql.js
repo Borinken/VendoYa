@@ -3,7 +3,7 @@ const fs = require('fs');
 
 const supabase = createClient(
   'https://iuqumqztkzpfefkgguuq.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml1cXVtcXp0a3pwZmVma2dndXVxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzkyNTIyNywiZXhwIjoyMDkzNTAxMjI3fQ.rjrR32YKRQVutuNd0T1CvZ0YFRjoimrdnGfWy0x5cNc',
+  process.env.SUPABASE_SERVICE_ROLE_KEY,
   {
     db: { schema: 'public' },
     auth: { persistSession: false }

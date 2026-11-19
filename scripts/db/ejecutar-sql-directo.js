@@ -5,7 +5,7 @@ const https = require('https');
 
 // Leer variables de entorno
 const SUPABASE_URL = 'https://iuqumqztkzpfefkgguuq.supabase.co';
-const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml1cXVtcXp0a3pwZmVma2dndXVxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzkyNTIyNywiZXhwIjoyMDkzNTAxMjI3fQ.rjrR32YKRQVutuNd0T1CvZ0YFRjoimrdnGfWy0x5cNc';
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 // Leer el archivo SQL
 const sqlContent = fs.readFileSync('SCHEMA_LEADS.sql', 'utf8');
