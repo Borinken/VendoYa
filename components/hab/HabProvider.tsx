@@ -41,7 +41,7 @@ export function HabProvider({ session, children }: { session: Session; children:
     <C.Provider value={{ session, repo, data, error, reload, act, notify }}>
       {children}
       <div aria-live="polite" className="h-noprint" style={{ position: 'fixed', left: 0, right: 0, bottom: 72, display: 'grid', justifyItems: 'center', zIndex: 70, pointerEvents: 'none' }}>
-        {toast && <div className={`h-notice ${toast.tone === 'bad' ? 'bad' : 'ok'}`} style={{ pointerEvents: 'auto', background: 'var(--h-surface)', boxShadow: '0 6px 20px rgba(31,42,48,.10)', maxWidth: 'min(92vw, 520px)' }}>{toast.msg}</div>}
+        {toast && <div className={`h-notice ${toast.tone === 'bad' ? 'bad' : 'ok'}`} style={{ pointerEvents: 'auto', background: 'var(--h-surface)', boxShadow: '0 6px 20px rgba(17,22,29,.12)', maxWidth: 'min(92vw, 520px)' }}>{toast.msg}</div>}
       </div>
     </C.Provider>
   )

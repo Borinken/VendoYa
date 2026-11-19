@@ -28,8 +28,8 @@ export function Contratos() {
       actions={canWrite && d.rooms.length > 0 ? <button className="h-btn primary" onClick={() => setWizard({})}><FileText size={18} aria-hidden /> Nuevo contrato</button> : undefined}>
       {d.contracts.length === 0 ? <Empty title="Aún no hay contratos" hint={d.rooms.length ? 'Crea el primero: el asistente te guía paso a paso y te avisa de lo que falte.' : 'Primero da de alta un piso con habitaciones.'} action={d.rooms.length ? (canWrite ? <button className="h-btn primary" onClick={() => setWizard({})}>Crear el primer contrato</button> : undefined) : <Link className="h-btn primary" href="/habitaciones/app/pisos">Dar de alta un piso</Link>} /> : (
         <Table rows={d.contracts} rowKey={c => c.id} cols={[
-          { label: 'Habitación', render: c => roomLabel(d, c.room_id) }, { label: 'Inquilino', render: c => d.tenants.find(t => t.id === c.tenant_id)?.full_name ?? '' },
-          { label: 'Periodo', render: c => `${fmtDate(c.starts_on)} → ${fmtDate(c.ends_on)}` }, { label: 'Renta', render: c => eur(c.rent_cents) },
+          { label: 'Habitación', render: c => roomLabel(d, c.room_id) }, { label: 'Inquilino', className: 'h-wrap', render: c => d.tenants.find(t => t.id === c.tenant_id)?.full_name ?? '' },
+          { label: 'Periodo', className: 'h-wrap', render: c => <><span style={{ whiteSpace: 'nowrap' }}>{fmtDate(c.starts_on)}</span> <span style={{ whiteSpace: 'nowrap' }}>→ {fmtDate(c.ends_on)}</span></> }, { label: 'Renta', render: c => eur(c.rent_cents) },
           { label: 'Estado', render: c => <Badge tone={TONE[c.status]}>{ST[c.status]}</Badge> },
           { label: 'Acciones', render: c => canWrite ? (
             <span className="flex flex-wrap gap-2 justify-end">
