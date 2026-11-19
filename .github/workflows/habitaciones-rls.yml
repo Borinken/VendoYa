@@ -1,0 +1,55 @@
+name: Habitaciones RLS
+
+# Valida el SQL de Habitaciones (001-004) y las pruebas de seguridad en una base Supabase LOCAL dentro del runner.
+# Nunca toca la nube: no usa secretos.
+on:
+  workflow_dispatch:
+  push:
+    branches: [habitaciones]
+    paths:
+      - 'supabase/migrations/habitaciones_*.sql'
+      - 'scripts/dev/hab-rls/**'
+      - 'lib/hab/**'
+      - '.github/workflows/habitaciones-rls.yml'
+
+jobs:
+  rls:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Levantar Supabase local (carpeta temporal)
+        run: |
+          mkdir -p "$RUNNER_TEMP/sb" && cd "$RUNNER_TEMP/sb"
+          supabase init
+          supabase start -x studio,imgproxy,edge-runtime,logflare,vector,mailpit
+
+      - name: Aplicar migraciones y pruebas
+        run: |
+          DB=$(docker ps --format '{{.Names}}' | grep '^supabase_db_' | head -1)
+          echo "db=$DB"
+          run() { docker exec -i "$DB" psql -U postgres -d postgres -v ON_ERROR_STOP=1 < "$1"; }
+          run supabase/migrations/habitaciones_ALL.sql
+          : > "$RUNNER_TEMP/rls.log"
+          for f in setup tests tests2 tests3; do
+            echo "== $f" | tee -a "$RUNNER_TEMP/rls.log"
+            run scripts/dev/hab-rls/$f.sql 2>&1 | tee -a "$RUNNER_TEMP/rls.log"
+          done
+          echo "PASS: $(grep -c 'PASS' "$RUNNER_TEMP/rls.log")  FAIL: $(grep -c 'FAIL' "$RUNNER_TEMP/rls.log")"
+          if grep -q 'FAIL' "$RUNNER_TEMP/rls.log"; then echo '::error::Hay pruebas RLS en FAIL'; exit 1; fi
+
+      - name: Subir registro
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rls-log
+          path: ${{ runner.temp }}/rls.log
+
+      - name: Parar Supabase
+        if: always()
+        run: cd "$RUNNER_TEMP/sb" && supabase stop --no-backup || true
